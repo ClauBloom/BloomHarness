@@ -1,0 +1,26 @@
+server:
+  port: 8787
+
+spring:
+  application:
+    name: bloom-harness
+  datasource:
+    url: jdbc:sqlite:./bloom-harness.db
+    driver-class-name: org.sqlite.JDBC
+
+bloom:
+  storage:
+    database-path: ./bloom-harness.db
+    auto-initialize: true
+  ai:
+    default-model: ""
+    default-thinking-level: "off"
+    providers: []
+  server:
+    server-id: bloom-harness-server
+    max-frame-length: 16777216
+    handshake-timeout-ms: 5000
+
+logging:
+  level:
+    com.claubloom.harness: INFO

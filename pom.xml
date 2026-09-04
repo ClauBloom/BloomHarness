@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.claubloom.harness</groupId>
+    <artifactId>bloom-harness-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>BloomHarness Parent</name>
+    <description>BloomHarness - Server-side AI Coding Agent System in Java 21</description>
+
+    <modules>
+        <module>bloom-harness-protocol</module>
+        <module>bloom-harness-core</module>
+        <module>bloom-harness-ai-adapter</module>
+        <module>bloom-harness-tools</module>
+        <module>bloom-harness-skills</module>
+        <module>bloom-harness-extension</module>
+        <module>bloom-harness-mcp</module>
+        <module>bloom-harness-storage</module>
+        <module>bloom-harness-server</module>
+        <module>bloom-harness-app</module>
+    </modules>
+
+    <properties>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <spring-boot.version>3.3.5</spring-boot.version>
+        <spring-ai.version>1.0.0-M3</spring-ai.version>
+        <mybatis-plus.version>3.5.7</mybatis-plus.version>
+        <sqlite-jdbc.version>3.46.1.0</sqlite-jdbc.version>
+        <ai-router.version>1.0.5-SNAPSHOT</ai-router.version>
+        <snakeyaml.version>2.2</snakeyaml.version>
+        <caffeine.version>3.1.8</caffeine.version>
+        <mockwebserver.version>4.12.0</mockwebserver.version>
+        <bloom-harness.version>1.0.0-SNAPSHOT</bloom-harness.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Spring AI BOM -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- MiniAPIRouter Core -->
+            <dependency>
+                <groupId>com.miniapi</groupId>
+                <artifactId>ai-router-core</artifactId>
+                <version>${ai-router.version}</version>
+            </dependency>
+
+            <!-- MyBatis Plus Starter -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!-- SQLite JDBC -->
+            <dependency>
+                <groupId>org.xerial</groupId>
+                <artifactId>sqlite-jdbc</artifactId>
+                <version>${sqlite-jdbc.version}</version>
+            </dependency>
+
+            <!-- SnakeYAML -->
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
+            </dependency>
+
+            <!-- Caffeine -->
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+            </dependency>
+
+            <!-- OkHttp MockWebServer for testing -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>mockwebserver</artifactId>
+                <version>${mockwebserver.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!-- BloomHarness Modules -->
+            <dependency>
+                <groupId>com.claubloom.harness</groupId>
+                <artifactId>bloom-harness-protocol</artifactId>
+                <version>${bloom-harness.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.claubloom.harness</groupId>
+                <artifactId>bloom-harness-core</artifactId>
+                <version>${bloom-harness.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.claubloom.harness</groupId>
+                <artifactId>bloom-harness-ai-adapter</artifactId>
+                <version>${bloom-harness.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.claubloom.harness</groupId>
+                <artifactId>bloom-harness-tools</artifactId>
+                <version>${bloom-harness.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.claubloom.harness</groupId>
+                <artifactId>bloom-harness-skills</artifactId>
+                <version>${bloom-harness.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.claubloom.harness</groupId>
+                <artifactId>bloom-harness-extension</artifactId>
+                <version>${bloom-harness.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.claubloom.harness</groupId>
+                <artifactId>bloom-harness-mcp</artifactId>
+                <version>${bloom-harness.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.claubloom.harness</groupId>
+                <artifactId>bloom-harness-storage</artifactId>
+                <version>${bloom-harness.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.claubloom.harness</groupId>
+                <artifactId>bloom-harness-server</artifactId>
+                <version>${bloom-harness.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.claubloom.harness</groupId>
+                <artifactId>bloom-harness-app</artifactId>
+                <version>${bloom-harness.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                    <configuration>
+                        <source>21</source>
+                        <target>21</target>
+                        <parameters>true</parameters>
+                        <useIncrementalCompilation>false</useIncrementalCompilation>
+                        <fork>true</fork>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.2.5</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+</project>

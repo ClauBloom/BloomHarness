@@ -1,24 +1,118 @@
-# Compiled class file
+# ====================================================================
+# BloomHarness Git Ignore Rules
+# ====================================================================
+
+# --------------------------------------------------------------------
+# 1. Java / Maven Build Artifacts
+# --------------------------------------------------------------------
+target/
+**/target/
 *.class
-
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
 *.jar
 *.war
-*.nar
 *.ear
 *.zip
 *.tar.gz
 *.rar
+*.nar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Maven Release & Dependency Artifacts
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.flattened-pom.xml
+
+# --------------------------------------------------------------------
+# 2. Local Runtime Database & Storage State
+# --------------------------------------------------------------------
+# SQLite databases and write-ahead logs
+*.db
+*.db-shm
+*.db-wal
+bloom-harness.db*
+sessions.db*
+
+# --------------------------------------------------------------------
+# 3. Provider Credentials & Secrets
+# --------------------------------------------------------------------
+bloom-providers.json
+providers.json
+*.env
+.env.local
+.env.*.local
+*.secret
+*.key
+*.pem
+
+# --------------------------------------------------------------------
+# 4. Local Maven Cache & Repositories
+# --------------------------------------------------------------------
+.m2-repo/
+.m2/
+
+# --------------------------------------------------------------------
+# 5. Frontend (bloom-harness-web) Build & Dependencies
+# --------------------------------------------------------------------
+**/node_modules/
+bloom-harness-web/dist/
+bloom-harness-web/.turbo/
+bloom-harness-web/.eslintcache
+bloom-harness-web/.stylelintcache
+*.local
+
+# --------------------------------------------------------------------
+# 6. IDEs, Editors & OS System Files
+# --------------------------------------------------------------------
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Eclipse
+.project
+.classpath
+.settings/
+.metadata/
+bin/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# --------------------------------------------------------------------
+# 7. Logs, Crash Dumps & Temporary Files
+# --------------------------------------------------------------------
+*.log
+logs/
+**/logs/
 hs_err_pid*
 replay_pid*
+*.tmp
+*.tmp.*
+.tmp_*
+*.dump
+*.dumpstream
+.comments_dump.json
+.unique_comments.json
+.round5_comments.json
+.remaining_comments.json
+.all_comments_raw.txt
