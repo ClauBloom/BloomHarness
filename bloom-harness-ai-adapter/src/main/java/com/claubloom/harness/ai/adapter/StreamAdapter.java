@@ -68,7 +68,15 @@ public class StreamAdapter {
             // 3. Tool Calls Delta
             if (chunk.getToolCalls() != null && !chunk.getToolCalls().isEmpty()) {
                 for (Map<String, Object> tcMap : chunk.getToolCalls()) {
-                    int index = tcMap.containsKey("index") ? ((Number) tcMap.get("index")).intValue() : toolCallBuilders.size();
+                    int index;
+                    if (tcMap.containsKey("index") && tcMap.get("index") instanceof Number num) {
+                        index = num.intValue();
+                    } else if (!toolCallBuilders.isEmpty()) {
+                        // 缺少 index 时（部分网关/代理流式分片），优先归集到当前最后一个正在构建的 ToolCallBuilder
+                        index = toolCallBuilders.keySet().stream().max(Integer::compareTo).orElse(0);
+                    } else {
+                        index = 0;
+                    }
                     ToolCallBuilder builder = toolCallBuilders.computeIfAbsent(index, i -> new ToolCallBuilder());
 
                     if (tcMap.get("id") != null) {

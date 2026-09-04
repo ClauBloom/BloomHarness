@@ -151,12 +151,21 @@ public class AiModelAdapter implements LlmCaller {
                 if (mc instanceof TextContent tc) {
                     textContent.append(tc.text());
                 } else if (mc instanceof ToolCallContent tc) {
+                    String argsJson = "{}";
+                    if (tc.input() != null) {
+                        try {
+                            argsJson = tc.input() instanceof String str ? str : objectMapper.writeValueAsString(tc.input());
+                        } catch (Exception e) {
+                            log.warn("Failed to serialize tool call input to JSON: {}", tc.input(), e);
+                            argsJson = "{}";
+                        }
+                    }
                     toolCalls.add(Map.of(
                             "id", tc.toolCallId(),
                             "type", "function",
                             "function", Map.of(
                                     "name", tc.toolName(),
-                                    "arguments", tc.input() != null ? tc.input().toString() : "{}"
+                                    "arguments", argsJson
                             )
                     ));
                 }

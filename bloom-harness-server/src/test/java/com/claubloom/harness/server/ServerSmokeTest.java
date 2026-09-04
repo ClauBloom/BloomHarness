@@ -293,7 +293,7 @@ public class ServerSmokeTest {
 
     private static final class StoredSession {
         final String id;
-        final String cwd;
+        volatile String cwd;
         final String name;
         volatile SessionPhase phase = SessionPhase.IDLE;
         final List<com.claubloom.harness.protocol.message.AgentMessage> transcript =
@@ -381,6 +381,12 @@ public class ServerSmokeTest {
         @Override
         public void setThinking(ThinkingLevel thinkingLevel) {
             stored.thinkingLevel = thinkingLevel;
+            emit(new PiSessionRuntimeEvent.SnapshotEvent());
+        }
+
+        @Override
+        public void setCwd(String newCwd) {
+            stored.cwd = newCwd;
             emit(new PiSessionRuntimeEvent.SnapshotEvent());
         }
 
