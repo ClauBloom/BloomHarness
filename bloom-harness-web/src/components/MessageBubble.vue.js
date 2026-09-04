@@ -3,6 +3,18 @@ import MarkdownRenderer from './MarkdownRenderer.vue';
 import ToolExecution from './ToolExecution.vue';
 import { User, Bot, Brain } from 'lucide-vue-next';
 const __VLS_props = defineProps();
+// 兜底提取历史消息文本中内嵌的 <think>...</think> 思考内容
+function parseTextContent(raw) {
+    if (!raw)
+        return { thinking: null, text: '' };
+    const thinkMatch = raw.match(/<think>([\s\S]*?)(?:<\/think>|$)/i);
+    if (thinkMatch) {
+        const thinking = thinkMatch[1].trim();
+        const text = raw.replace(/<think>[\s\S]*?(?:<\/think>|$)/i, '').trim();
+        return { thinking, text };
+    }
+    return { thinking: null, text: raw };
+}
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
@@ -49,14 +61,38 @@ for (const [item, idx] of __VLS_getVForSourceType((__VLS_ctx.message.content))) 
         key: (idx),
     });
     if (item.type === 'text') {
-        /** @type {[typeof MarkdownRenderer, ]} */ ;
-        // @ts-ignore
-        const __VLS_4 = __VLS_asFunctionalComponent(MarkdownRenderer, new MarkdownRenderer({
-            content: (item.text),
-        }));
-        const __VLS_5 = __VLS_4({
-            content: (item.text),
-        }, ...__VLS_functionalComponentArgsRest(__VLS_4));
+        if (__VLS_ctx.parseTextContent(item.text).thinking) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "my-2 p-2.5 rounded-lg bg-gray-950/70 border border-purple-900/40 text-xs text-purple-300 font-mono" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center gap-1.5 font-semibold text-purple-400 mb-1" },
+            });
+            const __VLS_4 = {}.Brain;
+            /** @type {[typeof __VLS_components.Brain, ]} */ ;
+            // @ts-ignore
+            const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
+                ...{ class: "w-3.5 h-3.5 animate-pulse" },
+            }));
+            const __VLS_6 = __VLS_5({
+                ...{ class: "w-3.5 h-3.5 animate-pulse" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_5));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "whitespace-pre-wrap leading-relaxed opacity-90" },
+            });
+            (__VLS_ctx.parseTextContent(item.text).thinking);
+        }
+        if (__VLS_ctx.parseTextContent(item.text).text) {
+            /** @type {[typeof MarkdownRenderer, ]} */ ;
+            // @ts-ignore
+            const __VLS_8 = __VLS_asFunctionalComponent(MarkdownRenderer, new MarkdownRenderer({
+                content: (__VLS_ctx.parseTextContent(item.text).text),
+            }));
+            const __VLS_9 = __VLS_8({
+                content: (__VLS_ctx.parseTextContent(item.text).text),
+            }, ...__VLS_functionalComponentArgsRest(__VLS_8));
+        }
     }
     else if (item.type === 'thinking') {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -65,15 +101,15 @@ for (const [item, idx] of __VLS_getVForSourceType((__VLS_ctx.message.content))) 
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "flex items-center gap-1.5 font-semibold text-purple-400 mb-1" },
         });
-        const __VLS_7 = {}.Brain;
+        const __VLS_11 = {}.Brain;
         /** @type {[typeof __VLS_components.Brain, ]} */ ;
         // @ts-ignore
-        const __VLS_8 = __VLS_asFunctionalComponent(__VLS_7, new __VLS_7({
+        const __VLS_12 = __VLS_asFunctionalComponent(__VLS_11, new __VLS_11({
             ...{ class: "w-3.5 h-3.5 animate-pulse" },
         }));
-        const __VLS_9 = __VLS_8({
+        const __VLS_13 = __VLS_12({
             ...{ class: "w-3.5 h-3.5 animate-pulse" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_8));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_12));
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "whitespace-pre-wrap leading-relaxed opacity-90" },
@@ -83,37 +119,37 @@ for (const [item, idx] of __VLS_getVForSourceType((__VLS_ctx.message.content))) 
     else if (item.type === 'toolCall') {
         /** @type {[typeof ToolExecution, ]} */ ;
         // @ts-ignore
-        const __VLS_11 = __VLS_asFunctionalComponent(ToolExecution, new ToolExecution({
+        const __VLS_15 = __VLS_asFunctionalComponent(ToolExecution, new ToolExecution({
             toolCall: item,
         }));
-        const __VLS_12 = __VLS_11({
+        const __VLS_16 = __VLS_15({
             toolCall: item,
-        }, ...__VLS_functionalComponentArgsRest(__VLS_11));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_15));
     }
 }
 if (__VLS_ctx.message.role === 'tool') {
     /** @type {[typeof ToolExecution, ]} */ ;
     // @ts-ignore
-    const __VLS_14 = __VLS_asFunctionalComponent(ToolExecution, new ToolExecution({
+    const __VLS_18 = __VLS_asFunctionalComponent(ToolExecution, new ToolExecution({
         toolResult: __VLS_ctx.message,
     }));
-    const __VLS_15 = __VLS_14({
+    const __VLS_19 = __VLS_18({
         toolResult: __VLS_ctx.message,
-    }, ...__VLS_functionalComponentArgsRest(__VLS_14));
+    }, ...__VLS_functionalComponentArgsRest(__VLS_18));
 }
 if (__VLS_ctx.message.role === 'user') {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center shrink-0" },
     });
-    const __VLS_17 = {}.User;
+    const __VLS_21 = {}.User;
     /** @type {[typeof __VLS_components.User, ]} */ ;
     // @ts-ignore
-    const __VLS_18 = __VLS_asFunctionalComponent(__VLS_17, new __VLS_17({
+    const __VLS_22 = __VLS_asFunctionalComponent(__VLS_21, new __VLS_21({
         ...{ class: "w-4 h-4 text-gray-300" },
     }));
-    const __VLS_19 = __VLS_18({
+    const __VLS_23 = __VLS_22({
         ...{ class: "w-4 h-4 text-gray-300" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_18));
+    }, ...__VLS_functionalComponentArgsRest(__VLS_22));
 }
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
@@ -174,6 +210,27 @@ if (__VLS_ctx.message.role === 'user') {
 /** @type {__VLS_StyleScopedClasses['whitespace-pre-wrap']} */ ;
 /** @type {__VLS_StyleScopedClasses['leading-relaxed']} */ ;
 /** @type {__VLS_StyleScopedClasses['opacity-90']} */ ;
+/** @type {__VLS_StyleScopedClasses['my-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gray-950/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-purple-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-purple-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-mono']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-purple-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mb-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-3.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-3.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['animate-pulse']} */ ;
+/** @type {__VLS_StyleScopedClasses['whitespace-pre-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-relaxed']} */ ;
+/** @type {__VLS_StyleScopedClasses['opacity-90']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-8']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-8']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
@@ -196,6 +253,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             User: User,
             Bot: Bot,
             Brain: Brain,
+            parseTextContent: parseTextContent,
         };
     },
     __typeProps: {},

@@ -5,6 +5,18 @@ import ToolExecution from './ToolExecution.vue';
 import { User, Bot, Brain } from 'lucide-vue-next';
 
 defineProps<{ message: AgentMessage }>();
+
+// 兜底提取历史消息文本中内嵌的 <think>...</think> 思考内容
+function parseTextContent(raw: string) {
+  if (!raw) return { thinking: null, text: '' };
+  const thinkMatch = raw.match(/<think>([\s\S]*?)(?:<\/think>|$)/i);
+  if (thinkMatch) {
+    const thinking = thinkMatch[1].trim();
+    const text = raw.replace(/<think>[\s\S]*?(?:<\/think>|$)/i, '').trim();
+    return { thinking, text };
+  }
+  return { thinking: null, text: raw };
+}
 </script>
 
 <template>
@@ -33,8 +45,17 @@ defineProps<{ message: AgentMessage }>();
 
       <!-- Message Content Loop -->
       <div v-for="(item, idx) in message.content" :key="idx">
-        <!-- Text -->
-        <MarkdownRenderer v-if="item.type === 'text'" :content="item.text" />
+        <!-- Text (含可能内嵌的 <think> 思考块双重兼容提取) -->
+        <template v-if="item.type === 'text'">
+          <div v-if="parseTextContent(item.text).thinking" class="my-2 p-2.5 rounded-lg bg-gray-950/70 border border-purple-900/40 text-xs text-purple-300 font-mono">
+            <div class="flex items-center gap-1.5 font-semibold text-purple-400 mb-1">
+              <Brain class="w-3.5 h-3.5 animate-pulse" />
+              <span>思考过程 (Reasoning)</span>
+            </div>
+            <div class="whitespace-pre-wrap leading-relaxed opacity-90">{{ parseTextContent(item.text).thinking }}</div>
+          </div>
+          <MarkdownRenderer v-if="parseTextContent(item.text).text" :content="parseTextContent(item.text).text" />
+        </template>
 
         <!-- Thinking / Reasoning -->
         <div v-else-if="item.type === 'thinking'" class="my-2 p-2.5 rounded-lg bg-gray-950/70 border border-purple-900/40 text-xs text-purple-300 font-mono">

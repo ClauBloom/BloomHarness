@@ -73,8 +73,22 @@ const modelOptions = computed(() => {
     });
     return options;
 });
-function scrollToBottom() {
-    nextTick(() => {
+let scrollRaf = null;
+let userScrolledUp = false;
+function onMessagesScroll() {
+    if (!messagesContainer.value)
+        return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
+    // If user scrolled up more than 60px from bottom, respect user's position
+    userScrolledUp = scrollHeight - (scrollTop + clientHeight) > 60;
+}
+function scrollToBottom(force = false) {
+    if (userScrolledUp && !force)
+        return;
+    if (scrollRaf !== null)
+        return;
+    scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = null;
         if (messagesContainer.value) {
             messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
         }
@@ -393,10 +407,32 @@ else {
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "flex justify-between items-center px-2 pt-2 text-[11px] text-gray-500" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "flex items-center gap-1.5 min-w-0 max-w-[70%] group" },
+});
+const __VLS_31 = {}.FolderGit2;
+/** @type {[typeof __VLS_components.FolderGit2, ]} */ ;
+// @ts-ignore
+const __VLS_32 = __VLS_asFunctionalComponent(__VLS_31, new __VLS_31({
+    ...{ class: "w-3.5 h-3.5 text-purple-400 shrink-0" },
+}));
+const __VLS_33 = __VLS_32({
+    ...{ class: "w-3.5 h-3.5 text-purple-400 shrink-0" },
+}, ...__VLS_functionalComponentArgsRest(__VLS_32));
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "text-gray-400 font-mono truncate" },
+    title: (__VLS_ctx.store.currentSession?.cwd || '当前根目录'),
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "text-gray-300 font-medium select-all" },
+});
+(__VLS_ctx.store.currentSession?.cwd || '当前根工作目录');
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "flex items-center gap-2 shrink-0" },
+});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.kbd, __VLS_intrinsicElements.kbd)({
-    ...{ class: "px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-300" },
+    ...{ class: "px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-300 font-mono" },
 });
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
@@ -682,6 +718,26 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.kbd, __VLS_intrinsicElements.k
 /** @type {__VLS_StyleScopedClasses['pt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-gray-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-[70%]']} */ ;
+/** @type {__VLS_StyleScopedClasses['group']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-3.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-3.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-purple-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['shrink-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-gray-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-mono']} */ ;
+/** @type {__VLS_StyleScopedClasses['truncate']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-gray-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['select-all']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['shrink-0']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-1.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-0.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-gray-800']} */ ;
@@ -689,6 +745,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.kbd, __VLS_intrinsicElements.k
 /** @type {__VLS_StyleScopedClasses['border-gray-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-gray-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-mono']} */ ;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {

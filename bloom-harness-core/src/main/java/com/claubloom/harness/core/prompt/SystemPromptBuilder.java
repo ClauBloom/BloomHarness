@@ -17,7 +17,7 @@ import java.util.List;
 public class SystemPromptBuilder {
 
     private static final String DEFAULT_BASE_PROMPT = """
-            You are an expert AI coding assistant and software engineer.
+            You are ClauBloom(also have a nicknime as Clau) an expert AI coding assistant and software engineer.
             You help users review, write, edit, and debug code, as well as execute commands in their workspace.
             """;
 

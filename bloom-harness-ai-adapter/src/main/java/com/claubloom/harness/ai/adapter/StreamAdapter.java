@@ -42,6 +42,9 @@ public class StreamAdapter {
         private final AtomicInteger completionTokens = new AtomicInteger(0);
         private String finishReason = "stop";
 
+        // 思考标签 <think>...</think> 状态机，用于自动识别与拆分混在 deltaContent 中的思考文本
+        private boolean inThinkTag = false;
+
         public StreamAccumulator(String messageId, ModelRef model) {
             this.messageId = messageId;
             this.model = model;
@@ -52,29 +55,14 @@ public class StreamAdapter {
                 return;
             }
 
-            // 1. Text Delta
-            if (chunk.getDeltaContent() != null && !chunk.getDeltaContent().isEmpty()) {
-                textBuilder.append(chunk.getDeltaContent());
-                completionTokens.incrementAndGet();
-                if (eventSink != null) {
-                    try {
-                        eventSink.emit(new MessageUpdateEvent(messageId, 0, "text", chunk.getDeltaContent()));
-                    } catch (Exception e) {
-                        log.warn("Error emitting text update event", e);
-                    }
-                }
+            // 1. 原生显式 Thinking / Reasoning Delta (部分服务商直接在 delta.reasoning_content 提供)
+            if (chunk.getReasoningContent() != null && !chunk.getReasoningContent().isEmpty()) {
+                emitThinking(chunk.getReasoningContent(), eventSink);
             }
 
-            // 2. Thinking / Reasoning Delta
-            if (chunk.getReasoningContent() != null && !chunk.getReasoningContent().isEmpty()) {
-                thinkingBuilder.append(chunk.getReasoningContent());
-                if (eventSink != null) {
-                    try {
-                        eventSink.emit(new MessageUpdateEvent(messageId, 1, "thinking", chunk.getReasoningContent()));
-                    } catch (Exception e) {
-                        log.warn("Error emitting thinking update event", e);
-                    }
-                }
+            // 2. 文本内容流及内嵌 <think>...</think> 动态分流
+            if (chunk.getDeltaContent() != null && !chunk.getDeltaContent().isEmpty()) {
+                processDeltaContent(chunk.getDeltaContent(), eventSink);
             }
 
             // 3. Tool Calls Delta
@@ -117,6 +105,67 @@ public class StreamAdapter {
                 }
                 if (chunk.getUpstreamUsage().containsKey("completion_tokens")) {
                     completionTokens.set(chunk.getUpstreamUsage().get("completion_tokens"));
+                }
+            }
+        }
+
+        /**
+         * 动态拆分并分流处理文本分片中的 <think> 与 </think> 标签内容。
+         */
+        private void processDeltaContent(String rawText, AgentEventSink eventSink) {
+            if (rawText == null || rawText.isEmpty()) return;
+
+            String text = rawText;
+            while (!text.isEmpty()) {
+                if (!inThinkTag) {
+                    int thinkStart = text.indexOf("<think>");
+                    if (thinkStart >= 0) {
+                        String before = text.substring(0, thinkStart);
+                        if (!before.isEmpty()) {
+                            emitText(before, eventSink);
+                        }
+                        inThinkTag = true;
+                        text = text.substring(thinkStart + 7);
+                    } else {
+                        emitText(text, eventSink);
+                        break;
+                    }
+                } else {
+                    int thinkEnd = text.indexOf("</think>");
+                    if (thinkEnd >= 0) {
+                        String thinkPart = text.substring(0, thinkEnd);
+                        if (!thinkPart.isEmpty()) {
+                            emitThinking(thinkPart, eventSink);
+                        }
+                        inThinkTag = false;
+                        text = text.substring(thinkEnd + 8);
+                    } else {
+                        emitThinking(text, eventSink);
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void emitText(String text, AgentEventSink eventSink) {
+            textBuilder.append(text);
+            completionTokens.incrementAndGet();
+            if (eventSink != null) {
+                try {
+                    eventSink.emit(new MessageUpdateEvent(messageId, 0, "text", text));
+                } catch (Exception e) {
+                    log.warn("Error emitting text update event", e);
+                }
+            }
+        }
+
+        private void emitThinking(String thinking, AgentEventSink eventSink) {
+            thinkingBuilder.append(thinking);
+            if (eventSink != null) {
+                try {
+                    eventSink.emit(new MessageUpdateEvent(messageId, 1, "thinking", thinking));
+                } catch (Exception e) {
+                    log.warn("Error emitting thinking update event", e);
                 }
             }
         }
