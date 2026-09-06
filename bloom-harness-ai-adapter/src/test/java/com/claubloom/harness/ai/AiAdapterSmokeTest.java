@@ -164,4 +164,82 @@ public class AiAdapterSmokeTest {
         Map<String, Object> inputArgs = (Map<String, Object>) toolCallContent.input();
         assertThat(inputArgs).containsEntry("path", "/test.txt");
     }
+
+    /**
+     * TC-P2-03: ProtocolSpec Map Matching & URL / Header Resolution.
+     */
+    @Test
+    @DisplayName("TC-P2-03: ProtocolSpec Map should correctly route Anthropic, OpenAI, and custom protocols")
+    void should_resolveUpstreamUrlAndHeaders_via_protocolSpecMap() throws Exception {
+        // Arrange
+        var providerRegistry = new com.claubloom.harness.ai.provider.ProviderRegistry();
+        var adapter = new com.claubloom.harness.ai.adapter.AiModelAdapter(protocolRegistry, providerRegistry, streamAdapter);
+
+        var anthropicProvider = com.claubloom.harness.ai.provider.ProviderConfig.of(
+                "anthropic-custom", "Custom Anthropic", "http://64.83.12.37:8045/v1", "sk-ant-test123", "anthropic"
+        );
+        var openAiProvider = com.claubloom.harness.ai.provider.ProviderConfig.of(
+                "openai-custom", "Custom OpenAI", "http://64.83.12.37:8045/v1", "sk-openai-test123", "openai"
+        );
+
+        // Act - Reflectively access resolveUpstreamUrl for assertion
+        var resolveMethod = com.claubloom.harness.ai.adapter.AiModelAdapter.class.getDeclaredMethod(
+                "resolveUpstreamUrl", com.claubloom.harness.ai.provider.ProviderConfig.class);
+        resolveMethod.setAccessible(true);
+
+        String anthropicUrl = (String) resolveMethod.invoke(adapter, anthropicProvider);
+        String openAiUrl = (String) resolveMethod.invoke(adapter, openAiProvider);
+
+        // Assert URLs
+        assertThat(anthropicUrl).isEqualTo("http://64.83.12.37:8045/v1/messages");
+        assertThat(openAiUrl).isEqualTo("http://64.83.12.37:8045/v1/chat/completions");
+
+        // Assert Headers via ProtocolSpec Header Enricher
+        var anthropicSpec = com.claubloom.harness.ai.adapter.AiModelAdapter.getProtocolSpec("anthropic");
+        var reqBuilderAnthropic = java.net.http.HttpRequest.newBuilder().uri(java.net.URI.create(anthropicUrl));
+        anthropicSpec.headerEnricher().accept(reqBuilderAnthropic, anthropicProvider);
+        var anthropicReq = reqBuilderAnthropic.build();
+
+        assertThat(anthropicReq.headers().firstValue("x-api-key")).contains("sk-ant-test123");
+        assertThat(anthropicReq.headers().firstValue("anthropic-version")).contains("2023-06-01");
+
+        var openAiSpec = com.claubloom.harness.ai.adapter.AiModelAdapter.getProtocolSpec("openai");
+        var reqBuilderOpenAi = java.net.http.HttpRequest.newBuilder().uri(java.net.URI.create(openAiUrl));
+        openAiSpec.headerEnricher().accept(reqBuilderOpenAi, openAiProvider);
+        var openAiReq = reqBuilderOpenAi.build();
+
+        assertThat(openAiReq.headers().firstValue("Authorization")).contains("Bearer sk-openai-test123");
+    }
+
+    /**
+     * TC-P2-04: Streaming Tool Call chunks missing index field.
+     */
+    @Test
+    @DisplayName("TC-P2-04: Should aggregate tool call chunks correctly even when index field is omitted")
+    void should_aggregateToolCallChunks_when_indexFieldMissing() {
+        // Arrange
+        String chunkNameOnly = "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"id\":\"call_bash_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\"}}]}}]}";
+        String chunkArgsPart1 = "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"function\":{\"arguments\":\"{\\\"command\\\":\\\"ls \"}}]}}]}";
+        String chunkArgsPart2 = "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"function\":{\"arguments\":\"-la\\\"}\"}}]}}]}";
+
+        StreamAdapter.StreamAccumulator accumulator = new StreamAdapter.StreamAccumulator("msg-stream-02", ModelRef.of("openai", "gpt-4o"));
+
+        for (String raw : List.of(chunkNameOnly, chunkArgsPart1, chunkArgsPart2)) {
+            UnifiedStreamChunk chunk = streamAdapter.parseOpenAiChunk(raw);
+            if (chunk != null) {
+                accumulator.appendChunk(chunk, null);
+            }
+        }
+
+        var assistantMsg = accumulator.toAssistantMessage(objectMapper);
+
+        // Assert
+        assertThat(assistantMsg.content()).hasSize(1);
+        assertThat(assistantMsg.content().get(0)).isInstanceOf(com.claubloom.harness.protocol.content.ToolCallContent.class);
+        var tc = (com.claubloom.harness.protocol.content.ToolCallContent) assistantMsg.content().get(0);
+        assertThat(tc.toolName()).isEqualTo("bash");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> input = (Map<String, Object>) tc.input();
+        assertThat(input).containsEntry("command", "ls -la");
+    }
 }

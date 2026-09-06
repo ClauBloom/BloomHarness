@@ -5,6 +5,7 @@ import com.claubloom.harness.core.loop.AgentEventSink;
 import com.claubloom.harness.core.loop.AgentLoop;
 import com.claubloom.harness.core.loop.AgentLoopConfig;
 import com.claubloom.harness.core.loop.LlmCaller;
+import com.claubloom.harness.core.tool.ToolDefinition;
 import com.claubloom.harness.protocol.message.AgentMessage;
 import com.claubloom.harness.protocol.message.UserMessage;
 import com.claubloom.harness.protocol.model.ModelRef;
@@ -35,7 +36,7 @@ public class AgentSessionRuntime implements PiSessionRuntime {
     private final SessionStorageService storage;
     private final SessionEventBroadcaster broadcaster;
     private final String systemPrompt;
-    private final List<com.claubloom.harness.core.tool.ToolDefinition> tools;
+    private final List<ToolDefinition> tools;
     private final List<Consumer<PiSessionRuntimeEvent>> listeners = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     private final AtomicReference<SessionPhase> phase = new AtomicReference<>(SessionPhase.IDLE);
@@ -51,7 +52,7 @@ public class AgentSessionRuntime implements PiSessionRuntime {
             SessionStorageService storage,
             SessionEventBroadcaster broadcaster,
             String systemPrompt,
-            List<com.claubloom.harness.core.tool.ToolDefinition> tools,
+            List<ToolDefinition> tools,
             ModelRef model,
             ThinkingLevel thinkingLevel) {
         this.sessionId = sessionId;

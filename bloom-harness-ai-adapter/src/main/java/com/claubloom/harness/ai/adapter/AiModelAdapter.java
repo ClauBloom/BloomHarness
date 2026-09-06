@@ -39,6 +39,77 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class AiModelAdapter implements LlmCaller {
 
+    public record ProtocolSpec(
+            String protocol,
+            String defaultEndpoint,
+            String pathSuffix,
+            java.util.function.BiConsumer<HttpRequest.Builder, ProviderConfig> headerEnricher
+    ) {}
+
+    private static final Map<String, ProtocolSpec> PROTOCOL_REGISTRY = new java.util.concurrent.ConcurrentHashMap<>();
+
+    static {
+        // OpenAI / 兼容协议
+        registerProtocol(new ProtocolSpec(
+                "openai",
+                "https://api.openai.com/v1/chat/completions",
+                "/chat/completions",
+                (builder, provider) -> {
+                    if (provider.apiKey() != null && !provider.apiKey().isBlank()) {
+                        builder.header("Authorization", "Bearer " + provider.apiKey().strip());
+                    }
+                }
+        ));
+
+        // Anthropic Claude 协议
+        registerProtocol(new ProtocolSpec(
+                "anthropic",
+                "https://api.anthropic.com/v1/messages",
+                "/messages",
+                (builder, provider) -> {
+                    if (provider.apiKey() != null && !provider.apiKey().isBlank()) {
+                        builder.header("x-api-key", provider.apiKey().strip());
+                    }
+                    builder.header("anthropic-version", "2023-06-01");
+                }
+        ));
+
+        // Ollama 原生协议
+        registerProtocol(new ProtocolSpec(
+                "ollama",
+                "http://localhost:11434/api/chat",
+                "/api/chat",
+                (builder, provider) -> {
+                    if (provider.apiKey() != null && !provider.apiKey().isBlank()) {
+                        builder.header("Authorization", "Bearer " + provider.apiKey().strip());
+                    }
+                }
+        ));
+
+        // Gemini 原生协议
+        registerProtocol(new ProtocolSpec(
+                "gemini",
+                "https://generativelanguage.googleapis.com/v1beta",
+                ":streamGenerateContent",
+                (builder, provider) -> {
+                    if (provider.apiKey() != null && !provider.apiKey().isBlank()) {
+                        builder.header("x-goog-api-key", provider.apiKey().strip());
+                    }
+                }
+        ));
+    }
+
+    public static void registerProtocol(ProtocolSpec spec) {
+        PROTOCOL_REGISTRY.put(spec.protocol().toLowerCase().trim(), spec);
+    }
+
+    public static ProtocolSpec getProtocolSpec(String protocol) {
+        if (protocol == null || protocol.isBlank()) {
+            return PROTOCOL_REGISTRY.get("openai");
+        }
+        return PROTOCOL_REGISTRY.getOrDefault(protocol.toLowerCase().trim(), PROTOCOL_REGISTRY.get("openai"));
+    }
+
     private final ProtocolRegistry protocolRegistry;
     private final ProviderRegistry providerRegistry;
     private final StreamAdapter streamAdapter;
@@ -214,9 +285,9 @@ public class AiModelAdapter implements LlmCaller {
                         .timeout(Duration.ofSeconds(25)) // 首包及单次读取超时
                         .POST(HttpRequest.BodyPublishers.ofString(jsonBody));
 
-                if (provider.apiKey() != null && !provider.apiKey().isBlank()) {
-                    reqBuilder.header("Authorization", "Bearer " + provider.apiKey().strip());
-                }
+                // 4. 根据协议规范动态增强 Header (如 Authorization 或 x-api-key / anthropic-version 等)
+                ProtocolSpec spec = getProtocolSpec(provider.protocol());
+                spec.headerEnricher().accept(reqBuilder, provider);
 
                 HttpResponse<java.io.InputStream> response;
                 try {
@@ -337,23 +408,29 @@ public class AiModelAdapter implements LlmCaller {
     }
 
     /**
-     * 智能规范化 Base URL，避免双重路径（如 /chat/completions/chat/completions）
+     * 智能规范化 Base URL，通过协议规范映射表动态路由
      */
     private String resolveUpstreamUrl(ProviderConfig provider) {
-        String baseUrl = provider.baseUrl() != null ? provider.baseUrl().strip() : "";
+        ProtocolSpec spec = getProtocolSpec(provider != null ? provider.protocol() : null);
+
+        String baseUrl = provider != null && provider.baseUrl() != null ? provider.baseUrl().strip() : "";
         while (baseUrl.endsWith("/")) {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
         }
 
         if (baseUrl.isBlank()) {
-            return "https://api.openai.com/v1/chat/completions";
+            return spec.defaultEndpoint();
         }
 
-        if (baseUrl.endsWith("/chat/completions")) {
+        if (baseUrl.endsWith(spec.pathSuffix())) {
             return baseUrl;
         }
 
-        return baseUrl + "/chat/completions";
+        String suffix = spec.pathSuffix();
+        if (!suffix.startsWith("/") && !suffix.startsWith(":")) {
+            suffix = "/" + suffix;
+        }
+        return baseUrl + suffix;
     }
 
     private String extractErrorMessage(String errorBody, int statusCode) {
