@@ -379,8 +379,6 @@ function showMessage(type: 'success' | 'error', text: string) {
                 >
                   <option value="openai">OpenAI Compatible</option>
                   <option value="anthropic">Anthropic Messages</option>
-                  <option value="deepseek">DeepSeek Native</option>
-                  <option value="ollama">Ollama</option>
                 </select>
               </div>
             </div>
@@ -394,7 +392,7 @@ function showMessage(type: 'success' | 'error', text: string) {
               <input 
                 v-model="currentProvider.baseUrl"
                 type="text"
-                placeholder="https://api.deepseek.com/v1 或本地 http://localhost:11434"
+                placeholder="https://api.deepseek.com/v1 或其他 OpenAI 兼容端点"
                 class="w-full bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl px-3.5 py-2 text-xs font-mono text-zinc-200 focus:outline-none transition"
               />
             </div>

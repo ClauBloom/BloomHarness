@@ -15,18 +15,17 @@ import com.claubloom.harness.protocol.message.ToolResultMessage;
 import com.claubloom.harness.protocol.message.UserMessage;
 import com.claubloom.harness.protocol.model.ModelRef;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.miniapi.router.core.domain.ApiKeyConfig;
+import com.miniapi.router.core.exception.UpstreamException;
 import com.miniapi.router.core.protocol.ProtocolRegistry;
 import com.miniapi.router.core.protocol.UnifiedRequest;
 import com.miniapi.router.core.protocol.converter.RequestConverter;
-import lombok.RequiredArgsConstructor;
+import com.miniapi.router.core.streaming.UpstreamStreamClient;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
+import java.io.BufferedReader;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -36,87 +35,34 @@ import java.util.concurrent.CompletableFuture;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class AiModelAdapter implements LlmCaller {
-
-    public record ProtocolSpec(
-            String protocol,
-            String defaultEndpoint,
-            String pathSuffix,
-            java.util.function.BiConsumer<HttpRequest.Builder, ProviderConfig> headerEnricher
-    ) {}
-
-    private static final Map<String, ProtocolSpec> PROTOCOL_REGISTRY = new java.util.concurrent.ConcurrentHashMap<>();
-
-    static {
-        // OpenAI / 兼容协议
-        registerProtocol(new ProtocolSpec(
-                "openai",
-                "https://api.openai.com/v1/chat/completions",
-                "/chat/completions",
-                (builder, provider) -> {
-                    if (provider.apiKey() != null && !provider.apiKey().isBlank()) {
-                        builder.header("Authorization", "Bearer " + provider.apiKey().strip());
-                    }
-                }
-        ));
-
-        // Anthropic Claude 协议
-        registerProtocol(new ProtocolSpec(
-                "anthropic",
-                "https://api.anthropic.com/v1/messages",
-                "/messages",
-                (builder, provider) -> {
-                    if (provider.apiKey() != null && !provider.apiKey().isBlank()) {
-                        builder.header("x-api-key", provider.apiKey().strip());
-                    }
-                    builder.header("anthropic-version", "2023-06-01");
-                }
-        ));
-
-        // Ollama 原生协议
-        registerProtocol(new ProtocolSpec(
-                "ollama",
-                "http://localhost:11434/api/chat",
-                "/api/chat",
-                (builder, provider) -> {
-                    if (provider.apiKey() != null && !provider.apiKey().isBlank()) {
-                        builder.header("Authorization", "Bearer " + provider.apiKey().strip());
-                    }
-                }
-        ));
-
-        // Gemini 原生协议
-        registerProtocol(new ProtocolSpec(
-                "gemini",
-                "https://generativelanguage.googleapis.com/v1beta",
-                ":streamGenerateContent",
-                (builder, provider) -> {
-                    if (provider.apiKey() != null && !provider.apiKey().isBlank()) {
-                        builder.header("x-goog-api-key", provider.apiKey().strip());
-                    }
-                }
-        ));
-    }
-
-    public static void registerProtocol(ProtocolSpec spec) {
-        PROTOCOL_REGISTRY.put(spec.protocol().toLowerCase().trim(), spec);
-    }
-
-    public static ProtocolSpec getProtocolSpec(String protocol) {
-        if (protocol == null || protocol.isBlank()) {
-            return PROTOCOL_REGISTRY.get("openai");
-        }
-        return PROTOCOL_REGISTRY.getOrDefault(protocol.toLowerCase().trim(), PROTOCOL_REGISTRY.get("openai"));
-    }
 
     private final ProtocolRegistry protocolRegistry;
     private final ProviderRegistry providerRegistry;
     private final StreamAdapter streamAdapter;
+    private final UpstreamStreamClient upstreamStreamClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
-            .build();
+
+    public AiModelAdapter(
+            ProtocolRegistry protocolRegistry,
+            ProviderRegistry providerRegistry,
+            StreamAdapter streamAdapter
+    ) {
+        this(protocolRegistry, providerRegistry, streamAdapter, new UpstreamStreamClient());
+    }
+
+    @Autowired
+    public AiModelAdapter(
+            ProtocolRegistry protocolRegistry,
+            ProviderRegistry providerRegistry,
+            StreamAdapter streamAdapter,
+            UpstreamStreamClient upstreamStreamClient
+    ) {
+        this.protocolRegistry = protocolRegistry;
+        this.providerRegistry = providerRegistry;
+        this.streamAdapter = streamAdapter;
+        this.upstreamStreamClient = upstreamStreamClient;
+    }
 
     @Override
     public CompletableFuture<AssistantMessage> call(AgentContext context, AgentLoopConfig config, AgentEventSink eventSink) {
@@ -156,12 +102,7 @@ public class AiModelAdapter implements LlmCaller {
         RequestConverter requestConverter = protocolRegistry.getRequestConverter(protocol);
         Map<String, Object> upstreamPayload = requestConverter.buildUpstreamRequest(unifiedRequest, modelRef.id());
 
-        // 显式保障 upstreamPayload 携带标准 OpenAI tools 结构
-        if (unifiedRequest.getTools() != null && !unifiedRequest.getTools().isEmpty()) {
-            upstreamPayload.put("tools", unifiedRequest.getTools());
-        }
-
-        return callUpstream(provider, upstreamPayload, modelRef, eventSink);
+        return callUpstream(provider, protocol, upstreamPayload, modelRef, eventSink);
     }
 
     /**
@@ -261,6 +202,7 @@ public class AiModelAdapter implements LlmCaller {
 
     private CompletableFuture<AssistantMessage> callUpstream(
             ProviderConfig provider,
+            String protocol,
             Map<String, Object> payload,
             ModelRef modelRef,
             AgentEventSink eventSink
@@ -270,50 +212,22 @@ public class AiModelAdapter implements LlmCaller {
             StreamAdapter.StreamAccumulator accumulator = new StreamAdapter.StreamAccumulator(messageId, modelRef);
 
             try {
-                // 1. 规范化并组装上游完整 URL
-                String url = resolveUpstreamUrl(provider);
-
-                // 2. 确保开启流式传输 (SSE)
+                // 1. 确保开启流式传输 (SSE)
                 payload.put("stream", true);
-                String jsonBody = objectMapper.writeValueAsString(payload);
-                log.info("Calling upstream AI provider [{}], model [{}], endpoint: {}", provider.providerId(), modelRef.id(), url);
+                ApiKeyConfig apiKeyConfig = ProviderRegistry.toApiKeyConfig(provider);
+                String defaultPath = "anthropic".equalsIgnoreCase(protocol) ? "/v1/messages" : "/v1/chat/completions";
 
-                // 3. 构建多级超时控制的 HTTP 请求 (连接超时 8s, 首包读取超时 25s)
-                HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .header("Content-Type", "application/json")
-                        .timeout(Duration.ofSeconds(25)) // 首包及单次读取超时
-                        .POST(HttpRequest.BodyPublishers.ofString(jsonBody));
+                log.info("Calling upstream AI via ai-router-core [{}], protocol [{}], model [{}], path [{}]",
+                        provider.providerId(), protocol, modelRef.id(), defaultPath);
 
-                // 4. 根据协议规范动态增强 Header (如 Authorization 或 x-api-key / anthropic-version 等)
-                ProtocolSpec spec = getProtocolSpec(provider.protocol());
-                spec.headerEnricher().accept(reqBuilder, provider);
-
-                HttpResponse<java.io.InputStream> response;
-                try {
-                    response = httpClient.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
-                } catch (java.net.http.HttpConnectTimeoutException e) {
-                    throw new com.claubloom.harness.ai.exception.AiExceptions.TimeoutException(
-                            "connect", "连接上游端点超时 (超过 8s)", e.getMessage());
-                } catch (java.net.http.HttpTimeoutException e) {
-                    throw new com.claubloom.harness.ai.exception.AiExceptions.TimeoutException(
-                            "first_byte", "等待上游首包响应超时 (超过 25s)", e.getMessage());
-                } catch (java.net.ConnectException | java.nio.channels.UnresolvedAddressException e) {
-                    throw new com.claubloom.harness.ai.exception.AiExceptions.NetworkException(
-                            "无法连接至服务商端点: " + e.getClass().getSimpleName(), e.getMessage(), e);
-                }
-
-                int statusCode = response.statusCode();
-
-                // 4. 精准映射并抛出非 200 HTTP 领域异常
-                if (statusCode < 200 || statusCode >= 300) {
-                    String errorBody;
-                    try (var is = response.body()) {
-                        errorBody = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-                    }
-                    log.error("Upstream AI returned HTTP {}: {}", statusCode, errorBody);
-                    com.claubloom.harness.ai.exception.BloomAiException mappedEx = mapHttpError(statusCode, errorBody);
-
+                // 2. 利用 ai-router-core 的 UpstreamStreamClient 发起流式调用（内置鉴权头注入、URL 规范化、虚拟线程空闲超时保护）
+                try (BufferedReader reader = upstreamStreamClient.stream(apiKeyConfig, defaultPath, payload)) {
+                    // 3. 统一消费 SSE：StreamAdapter 委托 DeltaJsonParser 解析（含 message_start usage 兜底补录）
+                    streamAdapter.consumeStream(reader, protocol, accumulator, eventSink);
+                } catch (UpstreamException e) {
+                    int statusCode = e.getUpstreamStatus() != 0 ? e.getUpstreamStatus() : (e.getHttpStatus() != 0 ? e.getHttpStatus() : 502);
+                    log.error("Upstream error (HTTP {}): {}", statusCode, e.getMessage());
+                    com.claubloom.harness.ai.exception.BloomAiException mappedEx = mapHttpError(statusCode, e.getMessage());
                     if (eventSink != null) {
                         try {
                             eventSink.emit(new com.claubloom.harness.core.event.MessageUpdateEvent(
@@ -323,7 +237,6 @@ public class AiModelAdapter implements LlmCaller {
                             log.warn("Failed emitting upstream error event", ex);
                         }
                     }
-
                     return AssistantMessage.error(
                             messageId,
                             List.of(new TextContent("上游调用失败: " + mappedEx.getMessage() + "\n建议: " + mappedEx.getSuggestion())),
@@ -332,17 +245,6 @@ public class AiModelAdapter implements LlmCaller {
                             System.currentTimeMillis(),
                             mappedEx.getMessage()
                     );
-                }
-
-                // 5. 解析 200 OK 流式 SSE 数据
-                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(response.body()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        var chunk = streamAdapter.parseOpenAiChunk(line);
-                        if (chunk != null) {
-                            accumulator.appendChunk(chunk, eventSink);
-                        }
-                    }
                 }
 
                 AssistantMessage message = accumulator.toAssistantMessage(objectMapper);
@@ -405,32 +307,6 @@ public class AiModelAdapter implements LlmCaller {
                     "AI_UPSTREAM_HTTP_" + statusCode, statusCode, "上游响应异常 (HTTP " + statusCode + "): " + friendlyMsg,
                     "请根据上方返回的错误信息排查服务商状态。", false, errorBody);
         };
-    }
-
-    /**
-     * 智能规范化 Base URL，通过协议规范映射表动态路由
-     */
-    private String resolveUpstreamUrl(ProviderConfig provider) {
-        ProtocolSpec spec = getProtocolSpec(provider != null ? provider.protocol() : null);
-
-        String baseUrl = provider != null && provider.baseUrl() != null ? provider.baseUrl().strip() : "";
-        while (baseUrl.endsWith("/")) {
-            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-        }
-
-        if (baseUrl.isBlank()) {
-            return spec.defaultEndpoint();
-        }
-
-        if (baseUrl.endsWith(spec.pathSuffix())) {
-            return baseUrl;
-        }
-
-        String suffix = spec.pathSuffix();
-        if (!suffix.startsWith("/") && !suffix.startsWith(":")) {
-            suffix = "/" + suffix;
-        }
-        return baseUrl + suffix;
     }
 
     private String extractErrorMessage(String errorBody, int statusCode) {

@@ -14,6 +14,7 @@ import com.miniapi.router.core.protocol.converter.anthropic.AnthropicStreamConve
 import com.miniapi.router.core.protocol.converter.openai.OpenAIRequestConverter;
 import com.miniapi.router.core.protocol.converter.openai.OpenAIResponseConverter;
 import com.miniapi.router.core.protocol.converter.openai.OpenAIStreamConverter;
+import com.miniapi.router.core.streaming.UpstreamStreamClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -94,11 +95,18 @@ public class AiAdapterAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public UpstreamStreamClient upstreamStreamClient() {
+        return new UpstreamStreamClient();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public AiModelAdapter aiModelAdapter(
             ProtocolRegistry protocolRegistry,
             ProviderRegistry providerRegistry,
-            StreamAdapter streamAdapter
+            StreamAdapter streamAdapter,
+            UpstreamStreamClient upstreamStreamClient
     ) {
-        return new AiModelAdapter(protocolRegistry, providerRegistry, streamAdapter);
+        return new AiModelAdapter(protocolRegistry, providerRegistry, streamAdapter, upstreamStreamClient);
     }
 }

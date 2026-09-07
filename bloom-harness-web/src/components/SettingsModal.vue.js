@@ -416,12 +416,6 @@ if (__VLS_ctx.currentProvider.providerId) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "anthropic",
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        value: "deepseek",
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        value: "ollama",
-    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-xs font-medium text-zinc-400 mb-1.5 flex items-center gap-1.5" },
@@ -439,7 +433,7 @@ if (__VLS_ctx.currentProvider.providerId) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
         value: (__VLS_ctx.currentProvider.baseUrl),
         type: "text",
-        placeholder: "https://api.deepseek.com/v1 或本地 http://localhost:11434",
+        placeholder: "https://api.deepseek.com/v1 或其他 OpenAI 兼容端点",
         ...{ class: "w-full bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl px-3.5 py-2 text-xs font-mono text-zinc-200 focus:outline-none transition" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({

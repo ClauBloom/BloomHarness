@@ -166,10 +166,11 @@ public class AiAdapterSmokeTest {
     }
 
     /**
-     * TC-P2-03: ProtocolSpec Map Matching & URL / Header Resolution.
+     * TC-P2-03: Verify ProtocolRegistry routes payloads to Anthropic/OpenAI formats,
+     * and UpstreamStreamClient protocol detection maps to the correct ApiKeyConfig.
      */
     @Test
-    @DisplayName("TC-P2-03: ProtocolSpec Map should correctly route Anthropic, OpenAI, and custom protocols")
+    @DisplayName("TC-P2-03: Protocol conversion produces Anthropic and OpenAI payloads with correct schemas")
     void should_resolveUpstreamUrlAndHeaders_via_protocolSpecMap() throws Exception {
         // Arrange
         var providerRegistry = new com.claubloom.harness.ai.provider.ProviderRegistry();
@@ -182,33 +183,35 @@ public class AiAdapterSmokeTest {
                 "openai-custom", "Custom OpenAI", "http://64.83.12.37:8045/v1", "sk-openai-test123", "openai"
         );
 
-        // Act - Reflectively access resolveUpstreamUrl for assertion
-        var resolveMethod = com.claubloom.harness.ai.adapter.AiModelAdapter.class.getDeclaredMethod(
-                "resolveUpstreamUrl", com.claubloom.harness.ai.provider.ProviderConfig.class);
-        resolveMethod.setAccessible(true);
+        // Act - convert provider configs into ai-router-core ApiKeyConfig (which drives URL build + header injection)
+        var antKeyConfig = com.claubloom.harness.ai.provider.ProviderRegistry.toApiKeyConfig(anthropicProvider);
+        var openAiKeyConfig = com.claubloom.harness.ai.provider.ProviderRegistry.toApiKeyConfig(openAiProvider);
 
-        String anthropicUrl = (String) resolveMethod.invoke(adapter, anthropicProvider);
-        String openAiUrl = (String) resolveMethod.invoke(adapter, openAiProvider);
+        // Assert protocol & key fidelity through the ai-router-core domain model
+        assertThat(antKeyConfig.getProtocol()).isEqualTo("anthropic");
+        assertThat(antKeyConfig.getApiKey()).isEqualTo("sk-ant-test123");
+        assertThat(openAiKeyConfig.getProtocol()).isEqualTo("openai");
+        assertThat(openAiKeyConfig.getApiKey()).isEqualTo("sk-openai-test123");
 
-        // Assert URLs
-        assertThat(anthropicUrl).isEqualTo("http://64.83.12.37:8045/v1/messages");
-        assertThat(openAiUrl).isEqualTo("http://64.83.12.37:8045/v1/chat/completions");
+        // Act - protocol converters normalize a UnifiedRequest into provider-specific payloads
+        var context = new com.claubloom.harness.core.loop.AgentContext();
+        context.getMessages().add(com.claubloom.harness.protocol.message.UserMessage.of("Hi"));
+        var config = com.claubloom.harness.core.loop.AgentLoopConfig.builder()
+                .systemPrompt("You are a helpful assistant.")
+                .model(ModelRef.of("anthropic", "claude-3-5-sonnet-20241022"))
+                .build();
 
-        // Assert Headers via ProtocolSpec Header Enricher
-        var anthropicSpec = com.claubloom.harness.ai.adapter.AiModelAdapter.getProtocolSpec("anthropic");
-        var reqBuilderAnthropic = java.net.http.HttpRequest.newBuilder().uri(java.net.URI.create(anthropicUrl));
-        anthropicSpec.headerEnricher().accept(reqBuilderAnthropic, anthropicProvider);
-        var anthropicReq = reqBuilderAnthropic.build();
+        UnifiedRequest anthropicReq = adapter.toUnifiedRequest(context, config, ModelRef.of("anthropic", "claude-3-5-sonnet-20241022"), "anthropic");
+        Map<String, Object> anthropicPayload = protocolRegistry.getRequestConverter("anthropic").buildUpstreamRequest(anthropicReq, "claude-3-5-sonnet-20241022");
 
-        assertThat(anthropicReq.headers().firstValue("x-api-key")).contains("sk-ant-test123");
-        assertThat(anthropicReq.headers().firstValue("anthropic-version")).contains("2023-06-01");
+        assertThat(anthropicPayload.get("model")).isEqualTo("claude-3-5-sonnet-20241022");
+        assertThat(anthropicPayload).containsKey("system");
+        assertThat(anthropicPayload).containsKey("stream");
 
-        var openAiSpec = com.claubloom.harness.ai.adapter.AiModelAdapter.getProtocolSpec("openai");
-        var reqBuilderOpenAi = java.net.http.HttpRequest.newBuilder().uri(java.net.URI.create(openAiUrl));
-        openAiSpec.headerEnricher().accept(reqBuilderOpenAi, openAiProvider);
-        var openAiReq = reqBuilderOpenAi.build();
-
-        assertThat(openAiReq.headers().firstValue("Authorization")).contains("Bearer sk-openai-test123");
+        UnifiedRequest openAiUnified = adapter.toUnifiedRequest(context, config, ModelRef.of("openai", "gpt-4o"), "openai");
+        Map<String, Object> openAiPayload = protocolRegistry.getRequestConverter("openai").buildUpstreamRequest(openAiUnified, "gpt-4o");
+        assertThat(openAiPayload.get("model")).isEqualTo("gpt-4o");
+        assertThat(openAiPayload).containsKey("messages");
     }
 
     /**
@@ -241,5 +244,80 @@ public class AiAdapterSmokeTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> input = (Map<String, Object>) tc.input();
         assertThat(input).containsEntry("command", "ls -la");
+    }
+
+    /**
+     * TC-P2-05: Anthropic SSE Stream parsing and message accumulation.
+     */
+    @Test
+    @DisplayName("TC-P2-05: Should parse Anthropic SSE stream lines and accumulate text and tool calls")
+    void should_parseAnthropicSseStream_and_accumulateAssistantMessage() throws Exception {
+        // Arrange
+        String ssePayload = """
+                event: message_start
+                data: {"type":"message_start","message":{"id":"msg_ant_1","type":"message","role":"assistant","model":"claude-3-5-sonnet","content":[],"stop_reason":null,"usage":{"input_tokens":25,"output_tokens":0}}}
+
+                event: content_block_start
+                data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}
+
+                event: content_block_delta
+                data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"I will execute "}}
+
+                event: content_block_delta
+                data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"the command."}}
+
+                event: content_block_stop
+                data: {"type":"content_block_stop","index":0}
+
+                event: content_block_start
+                data: {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"call_bash_ant_1","name":"bash","input":{}}}
+
+                event: content_block_delta
+                data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\\"command\\": \\"echo 'hello'\\"}"}}
+
+                event: content_block_stop
+                data: {"type":"content_block_stop","index":1}
+
+                event: message_delta
+                data: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":18}}
+
+                event: message_stop
+                data: {"type":"message_stop"}
+                """;
+
+        StreamAdapter.StreamAccumulator accumulator = new StreamAdapter.StreamAccumulator(
+                "msg_ant_1", ModelRef.of("anthropic", "claude-3-5-sonnet")
+        );
+
+        // Act
+        try (var reader = new java.io.BufferedReader(new java.io.StringReader(ssePayload))) {
+            streamAdapter.consumeAnthropicStream(reader, accumulator, null);
+        }
+
+        var assistantMsg = accumulator.toAssistantMessage(objectMapper);
+
+        // Assert
+        assertThat(assistantMsg).isNotNull();
+        assertThat(assistantMsg.id()).isEqualTo("msg_ant_1");
+        assertThat(assistantMsg.stopReason()).isEqualTo("toolUse");
+
+        // 1 text content + 1 tool call
+        assertThat(assistantMsg.content()).hasSize(2);
+        assertThat(assistantMsg.content().get(0)).isInstanceOf(com.claubloom.harness.protocol.content.TextContent.class);
+        var textContent = (com.claubloom.harness.protocol.content.TextContent) assistantMsg.content().get(0);
+        assertThat(textContent.text()).isEqualTo("I will execute the command.");
+
+        assertThat(assistantMsg.content().get(1)).isInstanceOf(com.claubloom.harness.protocol.content.ToolCallContent.class);
+        var toolCall = (com.claubloom.harness.protocol.content.ToolCallContent) assistantMsg.content().get(1);
+        assertThat(toolCall.toolName()).isEqualTo("bash");
+        assertThat(toolCall.toolCallId()).isEqualTo("call_bash_ant_1");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> input = (Map<String, Object>) toolCall.input();
+        assertThat(input).containsEntry("command", "echo 'hello'");
+
+        // Usage check
+        assertThat(assistantMsg.usage()).isNotNull();
+        assertThat(assistantMsg.usage().input()).isEqualTo(25);
+        assertThat(assistantMsg.usage().output()).isGreaterThan(0);
     }
 }

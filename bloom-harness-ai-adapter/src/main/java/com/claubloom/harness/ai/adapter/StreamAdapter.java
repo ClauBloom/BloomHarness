@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.miniapi.router.core.protocol.UnifiedStreamChunk;
+import com.miniapi.router.core.streaming.DeltaJsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -50,6 +51,10 @@ public class StreamAdapter {
             this.model = model;
         }
 
+        public String getMessageId() {
+            return messageId;
+        }
+
         public void appendChunk(UnifiedStreamChunk chunk, AgentEventSink eventSink) {
             if (chunk == null) {
                 return;
@@ -65,7 +70,7 @@ public class StreamAdapter {
                 processDeltaContent(chunk.getDeltaContent(), eventSink);
             }
 
-            // 3. Tool Calls Delta
+            // 3. Tool Calls Delta (OpenAI 格式解析结果)
             if (chunk.getToolCalls() != null && !chunk.getToolCalls().isEmpty()) {
                 for (Map<String, Object> tcMap : chunk.getToolCalls()) {
                     int index;
@@ -103,6 +108,29 @@ public class StreamAdapter {
                 }
             }
 
+            // 4. Anthropic Tool Calls (来自 DeltaJsonParser extra 结构，仅在 tool_use 内容块上触发)
+            if ("tool_use".equals(chunk.getContentType()) && chunk.getExtra() != null) {
+                int index = chunk.getIndex();
+                ToolCallBuilder builder = toolCallBuilders.computeIfAbsent(index, i -> new ToolCallBuilder());
+                if (chunk.getExtra().containsKey("tool_use_id")) {
+                    builder.id = (String) chunk.getExtra().get("tool_use_id");
+                }
+                if (chunk.getExtra().containsKey("tool_name")) {
+                    builder.name = (String) chunk.getExtra().get("tool_name");
+                }
+                if (chunk.getExtra().containsKey("input_json_delta")) {
+                    String partial = (String) chunk.getExtra().get("input_json_delta");
+                    builder.argumentsBuilder.append(partial);
+                    if (eventSink != null) {
+                        try {
+                            eventSink.emit(new MessageUpdateEvent(messageId, index + 2, "toolCall", partial));
+                        } catch (Exception e) {
+                            log.warn("Error emitting toolCall update event", e);
+                        }
+                    }
+                }
+            }
+
             if (chunk.getFinishReason() != null && !chunk.getFinishReason().isEmpty()) {
                 this.finishReason = chunk.getFinishReason();
             }
@@ -114,6 +142,21 @@ public class StreamAdapter {
                 if (chunk.getUpstreamUsage().containsKey("completion_tokens")) {
                     completionTokens.set(chunk.getUpstreamUsage().get("completion_tokens"));
                 }
+            }
+        }
+
+        /**
+         * 直接补录上游用量（覆盖语义，幂等）。用于旧版解析器丢弃 message_start 用量时的兜底补录。
+         */
+        public void appendUsage(Map<String, Integer> usage) {
+            if (usage == null) {
+                return;
+            }
+            if (usage.containsKey("prompt_tokens")) {
+                promptTokens.set(usage.get("prompt_tokens"));
+            }
+            if (usage.containsKey("completion_tokens")) {
+                completionTokens.set(usage.get("completion_tokens"));
             }
         }
 
@@ -231,47 +274,82 @@ public class StreamAdapter {
 
     /**
      * 将 OpenAI 原始流式 JSON 数据行解析为统一的数据分片 UnifiedStreamChunk。
+     * 兼容性包装：委托给 ai-router-core 的 DeltaJsonParser，避免重复维护 SSE 解析逻辑。
      */
     public UnifiedStreamChunk parseOpenAiChunk(String jsonLine) {
-        try {
-            if (jsonLine.startsWith("data: ")) {
-                jsonLine = jsonLine.substring(6).trim();
-            }
-            if (jsonLine.equals("[DONE]") || jsonLine.isBlank()) {
-                return null;
-            }
-
-            JsonNode node = objectMapper.readTree(jsonLine);
-            String id = node.path("id").asText(null);
-            String model = node.path("model").asText(null);
-
-            JsonNode choices = node.path("choices");
-            if (choices.isArray() && !choices.isEmpty()) {
-                JsonNode firstChoice = choices.get(0);
-                JsonNode delta = firstChoice.path("delta");
-                String content = delta.path("content").asText(null);
-                String reasoning = delta.path("reasoning_content").asText(null);
-                String finishReason = firstChoice.path("finish_reason").asText(null);
-
-                List<Map<String, Object>> toolCalls = null;
-                JsonNode toolCallsNode = delta.path("tool_calls");
-                if (toolCallsNode.isArray() && !toolCallsNode.isEmpty()) {
-                    toolCalls = objectMapper.convertValue(toolCallsNode, new TypeReference<>() {});
-                }
-
-                return UnifiedStreamChunk.builder()
-                        .id(id)
-                        .model(model)
-                        .deltaContent(content)
-                        .reasoningContent(reasoning)
-                        .toolCalls(toolCalls)
-                        .finishReason(finishReason)
-                        .timestamp(System.currentTimeMillis())
-                        .build();
-            }
-        } catch (Exception e) {
-            log.warn("Failed to parse OpenAI chunk: {}", jsonLine, e);
+        Object parsed = DeltaJsonParser.parseSseLine(jsonLine, "openai", null, null);
+        if (parsed instanceof UnifiedStreamChunk chunk) {
+            return chunk;
         }
         return null;
+    }
+
+    /**
+     * 统一的流式消费入口：逐行读取 SSE 并委托 ai-router-core 的 DeltaJsonParser 解析。
+     * 支持 OpenAI 与 Anthropic 两种上游协议。
+     * <p>
+     * 兼容性兜底：旧版 DeltaJsonParser 在 Anthropic message_start 事件上不携带 usage，
+     * 此处直接从原始行补录 input_tokens（覆盖语义，幂等，与新版解析器不冲突）。
+     */
+    public void consumeStream(
+            java.io.BufferedReader reader,
+            String protocol,
+            StreamAccumulator accumulator,
+            AgentEventSink eventSink
+    ) throws java.io.IOException {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || !trimmed.startsWith("data:")) {
+                continue;
+            }
+            if (accumulator != null && "anthropic".equalsIgnoreCase(protocol)
+                    && trimmed.contains("\"message_start\"")) {
+                accumulator.appendUsage(extractAnthropicMessageStartUsage(trimmed));
+            }
+            // DeltaJsonParser 期望完整的 "data: ..." SSE 行（内部自行剥离前缀）
+            Object parsed = DeltaJsonParser.parseSseLine(trimmed, protocol,
+                    accumulator != null ? accumulator.getMessageId() : null, null);
+            if (parsed == DeltaJsonParser.DONE) {
+                return;
+            }
+            if (parsed instanceof UnifiedStreamChunk chunk) {
+                accumulator.appendChunk(chunk, eventSink);
+            }
+        }
+    }
+
+    /**
+     * 从 Anthropic message_start 原始 data 行提取 usage（input_tokens -> prompt_tokens）。
+     */
+    private Map<String, Integer> extractAnthropicMessageStartUsage(String dataLine) {
+        try {
+            JsonNode node = objectMapper.readTree(dataLine.substring(5).trim());
+            JsonNode usageNode = node.path("message").path("usage");
+            if (usageNode.isMissingNode() || usageNode.size() == 0) {
+                return null;
+            }
+            Map<String, Integer> usage = new LinkedHashMap<>();
+            if (usageNode.has("input_tokens")) {
+                usage.put("prompt_tokens", usageNode.get("input_tokens").asInt(0));
+            }
+            if (usageNode.has("output_tokens")) {
+                usage.put("completion_tokens", usageNode.get("output_tokens").asInt(0));
+            }
+            return usage;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 消费并解析 Anthropic 协议标准的 SSE 事件流（兼容旧 API，委托 {@link #consumeStream}）。
+     */
+    public void consumeAnthropicStream(
+            java.io.BufferedReader reader,
+            StreamAccumulator accumulator,
+            AgentEventSink eventSink
+    ) throws java.io.IOException {
+        consumeStream(reader, "anthropic", accumulator, eventSink);
     }
 }

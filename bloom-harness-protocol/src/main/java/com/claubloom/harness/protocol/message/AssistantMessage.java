@@ -19,7 +19,7 @@ public record AssistantMessage(
         String role,
         @JsonProperty(value = "content", required = true)
         List<MessageContent> content,
-        @JsonProperty(value = "model", required = true)
+        @JsonProperty("model")
         ModelRef model,
         @JsonProperty("responseModel")
         String responseModel,
