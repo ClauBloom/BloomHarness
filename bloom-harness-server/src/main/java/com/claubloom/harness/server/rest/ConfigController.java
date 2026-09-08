@@ -18,11 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * AI 模型服务商与 API Key 凭证配置 REST 接口。
- * 参考 deepseek-harness 设置子系统架构设计：
- * - 分层配置与机密凭证脱敏策略
- * - 端点连通性探测与毫秒级延迟测量
- * - 全局通用偏好配置（默认模型、采样温度、系统提示词模板）
- * - 深度解耦并注入至 ai-router-core 路由引擎
+ * 提供服务商 CRUD、机密 API Key 脱敏查询、端点连通性探测与模型列表自动拉取，
+ * 以及全局通用偏好配置（默认模型、采样温度、系统提示词模板）的读写。
  */
 @Slf4j
 @RestController

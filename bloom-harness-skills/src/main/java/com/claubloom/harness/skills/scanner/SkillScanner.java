@@ -13,8 +13,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 /**
- * 扫描目录以发现 Agent Skills（SKILL.md 与 *.md），并按作用域解决命名冲突。
- * 与 pi 的 skills.ts 中 loadSkills 与 loadSkillsFromDir 实现保持一致。
+ * 递归扫描目录以发现 Agent Skills（SKILL.md 与 *.md）。
+ * 按 user → custom → project 的优先级加载，同名时高优先级的技能覆盖低优先级的技能。
  */
 @Slf4j
 @Component
@@ -68,7 +68,7 @@ public class SkillScanner {
                         return FileVisitResult.SKIP_SUBTREE;
                     }
 
-                    // 若该目录包含 SKILL.md，则加载它并跳过更深的子树（对应 pi 的规则）
+                    // 若该目录包含 SKILL.md，则加载它并跳过更深的子树
                     Path skillMd = dir.resolve("SKILL.md");
                     if (Files.exists(skillMd) && Files.isRegularFile(skillMd)) {
                         tryLoadSkill(skillMd, scope, targetMap);

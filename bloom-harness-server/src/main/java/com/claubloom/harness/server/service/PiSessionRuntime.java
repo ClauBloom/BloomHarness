@@ -8,8 +8,9 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * 单个已获取的持久化会话运行时接口。冲突操作必须立即拒绝而非排队阻塞。
- * 严格对齐 pi-agent 的 PiSessionRuntime 规范。
+ * 单个已获取的持久化会话运行时接口。
+ * 提供提示词执行、中途干预、中断、模型/思考级别切换与快照查询。
+ * 冲突操作必须立即拒绝而非排队阻塞。
  */
 public interface PiSessionRuntime {
 

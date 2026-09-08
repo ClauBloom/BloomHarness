@@ -25,8 +25,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * 负责 SQLite 持久化的会话存储服务。
- * 直接对应 pi 的 repo.ts(sessions、entries、session_stats)。
+ * 基于 SQLite 的会话持久化服务，提供会话的创建、对话记录追加、快照恢复与列表查询。
  */
 @Slf4j
 @Service

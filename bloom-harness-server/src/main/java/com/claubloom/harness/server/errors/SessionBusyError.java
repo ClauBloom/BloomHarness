@@ -2,7 +2,7 @@ package com.claubloom.harness.server.errors;
 
 import com.claubloom.harness.protocol.result.ProtocolErrorCode;
 
-/** 对齐 pi-agent 的 SessionBusyError 会话正忙异常 (code: "busy")。 */
+/** 会话当前正在执行任务无法接受新操作时抛出 (code: "busy")。 */
 public class SessionBusyError extends PiServerError {
 
     public SessionBusyError() {

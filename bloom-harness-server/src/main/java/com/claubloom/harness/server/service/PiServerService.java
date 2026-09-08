@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 持久化会话与独占获取的运行时的服务边界。
- * 对齐 pi 在 packages/server/src/types.ts 中的 PiServerService 接口。
+ * 会话持久化与运行时独占获取的服务边界接口。
+ * 实现方负责会话的列表查询、模型列表、创建与打开操作。
  */
 public interface PiServerService {
 

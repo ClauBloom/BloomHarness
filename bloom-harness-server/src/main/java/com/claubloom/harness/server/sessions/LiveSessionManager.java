@@ -49,9 +49,8 @@ import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 跟踪已获取的会话运行时、附加的连接与命令执行。
- * 忠实移植 pi 在 packages/server/src/sessions.ts 中的 LiveSessionManager
- * （获取循环、附加/分离生命周期、快照广播、空闲释放）。
+ * 活跃会话管理器：跟踪已获取的会话运行时，处理附加/分离生命周期，
+ * 执行客户端命令，维护快照广播，并在连接全部断开且会话空闲时自动释放运行时。
  */
 @Slf4j
 public class LiveSessionManager {
@@ -224,7 +223,7 @@ public class LiveSessionManager {
         });
     }
 
-    /** 释放所有活跃会话；对齐 pi-agent 的 close() 规范。 */
+    /** 释放所有活跃会话并等待 dispose 完成。 */
     public CompletableFuture<Void> close() {
         CompletableFuture<Void> openingAll = CompletableFuture.completedFuture(null);
         for (CompletableFuture<LiveSession> opening : List.copyOf(openingSessions.values())) {

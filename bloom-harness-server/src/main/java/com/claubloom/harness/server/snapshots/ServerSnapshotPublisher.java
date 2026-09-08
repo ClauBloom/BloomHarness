@@ -17,8 +17,8 @@ import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 向每条就绪连接发布带修订号的服务端快照，并将广播序列化。
- * 忠实移植 pi 在 packages/server/src/snapshots.ts 中的 ServerSnapshotPublisher。
+ * 向所有就绪连接发布带修订号的服务端快照。
+ * 内部通过 promise 链将广播请求序列化，确保同一时刻只有一次广播在执行。
  */
 @Slf4j
 public class ServerSnapshotPublisher {
@@ -69,7 +69,7 @@ public class ServerSnapshotPublisher {
                                 resolvedModels)));
     }
 
-    /** 排队执行一次序列化广播；对齐 pi 基于 promise 链的广播队列。 */
+    /** 排队执行一次序列化广播，确保广播按提交顺序依次执行。 */
     public CompletableFuture<Void> broadcast() {
         CompletableFuture<Void> broadcast = broadcastQueue.get()
                 .thenCompose(v -> performBroadcast())

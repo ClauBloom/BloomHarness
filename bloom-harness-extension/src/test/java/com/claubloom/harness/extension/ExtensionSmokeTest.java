@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * 扩展子系统的第 3 阶段冒烟测试（TC-P3-03 与 TC-P3-04）。
- * 直接对齐 pi 的 extensions-runner.test.ts 与扩展类型。
+ * 验证扩展生命周期钩子的执行顺序与扩展动态注册工具的能力。
  */
 public class ExtensionSmokeTest {
 

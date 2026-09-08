@@ -7,8 +7,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 以 Agent Skills 标准 XML 格式将可见技能格式化，供系统提示词注入使用。
- * 与 pi 的 skills.ts 中 formatSkillsForPrompt 实现保持一致。
+ * 将可见技能格式化为 Agent Skills 标准 XML 块，供系统提示词注入使用。
+ * 标记为 {@code disable-model-invocation} 的技能会被自动排除。
  */
 @Component
 public class SkillPromptInjector {

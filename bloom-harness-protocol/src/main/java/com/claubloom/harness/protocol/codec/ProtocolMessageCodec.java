@@ -6,10 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 
 /**
- * 将协议消息作为带长度前缀的 CBOR 负载进行校验与编解码。
- * 忠实移植自 pi 的 protocol/src/codec.ts(encodeClientMessage、encodeServerMessage、
- * ClientMessageDecoder、decodeServerMessage),使用 Jackson 的 CBOR 后端,
- * 使线上格式与 pi 的帧化 CBOR 传输保持一致。
+ * 协议消息的 CBOR 编解码器：将客户端/服务端消息序列化为带长度前缀的 CBOR 帧，
+ * 并在编解码过程中执行帧大小校验。使用 Jackson CBOR 后端实现二进制序列化。
  */
 public final class ProtocolMessageCodec {
 

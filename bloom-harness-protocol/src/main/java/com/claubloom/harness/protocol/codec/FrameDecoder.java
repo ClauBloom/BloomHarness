@@ -7,9 +7,8 @@ import java.util.Deque;
 import java.util.List;
 
 /**
- * 将任意字节块增量拆分为带长度前缀的负载。
- * 忠实移植自 pi 的 protocol/src/framing.ts 中的 FrameDecoder
- * (头部累积、负载块缓冲、open/ended/failed 状态机)。
+ * 增量帧解码器：将任意字节块拆分为带长度前缀的完整负载。
+ * 内部维护 open/ended/failed 三态状态机，支持头部累积与分块负载缓冲。
  */
 public final class FrameDecoder {
 

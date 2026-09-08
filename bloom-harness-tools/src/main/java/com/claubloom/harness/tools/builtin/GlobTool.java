@@ -15,8 +15,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 内置 Glob 工具，用于发现与模式匹配的文件。
- * 直接对应 pi 的 find.ts。
+ * 内置 Glob 工具，递归遍历目录树并返回与 glob 模式匹配的文件路径列表。
+ * 自动跳过 .git、node_modules 等常见非源码目录。
  */
 @Slf4j
 @Component

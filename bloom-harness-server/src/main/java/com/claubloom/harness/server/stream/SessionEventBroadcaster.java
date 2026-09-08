@@ -4,9 +4,7 @@ import com.claubloom.harness.protocol.stream.TranscriptProgress;
 import reactor.core.publisher.Flux;
 
 /**
- * 将会话的对话记录进度发布给流式消费者（SSE）。
- * 对齐 pi 的运行时进度事件（session_progress），通过面向 HTTP 的
- * 通道对外暴露，用于 TC-P4-03 流式透传。
+ * 会话对话记录进度的发布接口，用于向流式消费者（如 SSE）广播实时事件。
  */
 public interface SessionEventBroadcaster {
 

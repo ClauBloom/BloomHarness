@@ -22,8 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 内置 Bash 工具，用于执行带超时与尾部截断的 shell 命令。
- * 严格对齐 pi-agent 的 bash.ts 实现规范。
+ * 内置 Bash 工具，在子进程中执行 shell 命令，支持可配置的超时与尾部输出截断。
+ * 超时时强制终止进程树；非零退出码会在输出末尾追加 [exit code: N] 标记。
  */
 @Slf4j
 @Component
@@ -112,7 +112,7 @@ public class BashTool implements ToolDefinition {
 
                 boolean finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
                 if (!finished) {
-                    // 强制终止进程及其全部后代子进程（对应 pi 的 killProcessTree）
+                    // 强制终止进程及其全部后代子进程
                     process.descendants().forEach(ProcessHandle::destroyForcibly);
                     process.destroyForcibly();
                     readerThread.interrupt();

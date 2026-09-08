@@ -101,7 +101,7 @@ public class AgentSessionRuntime implements PiSessionRuntime {
         try {
             UserMessage userMessage = UserMessage.text(text);
             // 在追加提示词之前,先对先前的对话记录做快照,因为
-            // AgentLoop 会把提示词自行前置到上下文中(与 pi agent-loop.ts 的行为一致)。
+            // AgentLoop 会把提示词自行前置到上下文中。
             List<AgentMessage> priorTranscript = storage.getTranscript(sessionId);
             storage.appendEntry(sessionId, "user_message", userMessage);
             broadcaster.publish(sessionId, new com.claubloom.harness.protocol.stream.TranscriptProgress.ItemStarted(userMessage));

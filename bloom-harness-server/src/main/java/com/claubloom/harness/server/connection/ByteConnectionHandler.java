@@ -1,8 +1,7 @@
 package com.claubloom.harness.server.connection;
 
 /**
- * 已接受连接的回调处理器。
- * 对齐 pi 在 packages/server/src/connection.ts 中的 ByteConnectionHandler。
+ * 传输层接收到数据/关闭/错误事件时的回调处理器。
  */
 public interface ByteConnectionHandler {
 

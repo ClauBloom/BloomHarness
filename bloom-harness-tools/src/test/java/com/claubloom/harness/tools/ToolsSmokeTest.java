@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * 内置系统工具的第 2 阶段冒烟测试（TC-P2-03 ~ TC-P2-06）。
- * 直接对应 pi 的工具测试套件。
+ * 覆盖路径沙箱安全、文件读写编辑、Grep/Glob 过滤以及 Bash 执行与超时。
  */
 public class ToolsSmokeTest {
 

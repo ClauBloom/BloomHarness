@@ -4,8 +4,8 @@ import com.claubloom.harness.protocol.result.ProtocolError;
 import com.claubloom.harness.protocol.result.ProtocolErrorCode;
 
 /**
- * 可安全跨越协议边界的服务/运行时错误。
- * 对齐 pi 在 packages/server/src/errors.ts 中的 PiServerError。
+ * 可安全跨越协议边界传输到客户端的服务/运行时错误基类。
+ * 携带结构化的 {@link ProtocolErrorCode} 和可选的详情对象。
  */
 public class PiServerError extends RuntimeException {
 

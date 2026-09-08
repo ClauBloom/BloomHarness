@@ -2,7 +2,7 @@ package com.claubloom.harness.server.errors;
 
 import com.claubloom.harness.protocol.result.ProtocolErrorCode;
 
-/** 对齐 pi-agent 的 SessionNotFoundError 会话未找到异常 (code: "not_found")。 */
+/** 目标会话不存在时抛出 (code: "not_found")。 */
 public class SessionNotFoundError extends PiServerError {
 
     public SessionNotFoundError() {

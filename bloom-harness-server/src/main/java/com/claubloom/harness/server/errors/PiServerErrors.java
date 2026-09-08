@@ -5,7 +5,7 @@ import com.claubloom.harness.protocol.result.ProtocolErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * 服务器错误层级，对齐 pi 的 packages/server/src/errors.ts。
+ * 服务器错误体系的静态工具类。
  * 可安全跨越协议边界的错误继承 {@link PiServerError}；
  * 不安全的失败使用 {@link InternalServerError}，其原因是会上报但绝不序列化的。
  */
@@ -19,7 +19,7 @@ public final class PiServerErrors {
     private PiServerErrors() {
     }
 
-    /** 从网络协议代码字符串构造 ProtocolError 异常，对齐 pi-agent 规范。 */
+    /** 根据协议错误代码字符串构造 ProtocolError 异常。 */
     public static ProtocolError createProtocolError(String code, String message) {
         return ProtocolError.of(ProtocolErrorCode.fromValue(code), message);
     }

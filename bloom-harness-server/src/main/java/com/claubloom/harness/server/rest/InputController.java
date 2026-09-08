@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 用户输入交互 REST 控制器。
- * 为 Web 前端提供对齐 pi-agent prompt 指令的 HTTP 接口。
+ * 为 Web 前端提供提交提示词到指定会话的 HTTP 接口。
  */
 @RestController
 @RequestMapping("/api/input")

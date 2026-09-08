@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 内置 Read 工具，支持行号、分页（offset/limit）与头部截断。
- * 严格对齐 pi-agent 的 read.ts 实现规范。
+ * 内置 Read 工具，支持行号输出、分页（offset/limit）与头部截断。
+ * 读取指定文件内容并以带行号格式返回。
  */
 @Slf4j
 @Component

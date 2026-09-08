@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * ContextCompactor 实现上下文窗口压缩与切割点查找，与 pi 的 compaction.ts 保持一致。
+ * 上下文窗口压缩器：当令牌总数接近上下文窗口阈值时，
+ * 在历史消息中查找安全切割点（避免拆分工具调用/结果对），分离出待摘要的前段与需保留的尾段。
  */
 @Slf4j
 @Component

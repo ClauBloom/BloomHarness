@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 映射到 SQLite 'entries' 表的实体。
- * 与 pi 的 001_initial.sql entries 表结构直接对应。
+ * 映射到 SQLite 'entries' 表的实体，代表会话中按序号排列的单条对话记录。
  */
 @Data
 @Builder

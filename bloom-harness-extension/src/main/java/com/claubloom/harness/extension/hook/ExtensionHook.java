@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * BloomHarness 扩展的生命周期钩子接口。
- * 直接对齐 pi 的扩展生命周期事件订阅。
+ * 扩展通过实现此接口监听会话启停、回合前后、工具调用前后等关键事件。
  */
 public interface ExtensionHook {
 

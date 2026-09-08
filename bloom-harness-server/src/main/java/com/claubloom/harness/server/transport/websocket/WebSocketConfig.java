@@ -8,7 +8,7 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 /**
- * 为分帧 pi 协议注册 /ws/agent 端点。
+ * 注册 /ws/agent WebSocket 端点，使分帧二进制协议可通过 WebSocket 传输。
  */
 @Configuration
 @EnableWebSocket

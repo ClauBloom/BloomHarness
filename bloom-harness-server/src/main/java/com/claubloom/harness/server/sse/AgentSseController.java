@@ -14,10 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
 /**
- * Server-Sent Events (SSE) 服务端点，持续向客户端推送打字机分片进度事件，直至任务结束。
- * 对齐测试规约：客户端监听 /api/stream/{sessionId} 接收实时事件流
- * 事件以 chunk 分片形式发送，并在结束时由 end 标记终止
- * 忠实对齐 pi-agent 的 session_progress 进度透传机制。
+ * Server-Sent Events (SSE) 端点，持续向客户端推送会话的对话记录进度事件。
+ * 客户端监听 /api/stream/{sessionId} 接收实时流；
+ * 事件以分片形式发送，任务结束时流自动完成。
  */
 @Slf4j
 @RestController

@@ -36,12 +36,12 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 核心协议服务端：负责有序字节连接上的握手协商、请求分发与事件广播。
- * 严格对齐 pi-agent 的 PiServer 实现。
+ * 管理连接生命周期、协议版本校验与会话运行时的调度。
  */
 @Slf4j
 public class PiServer {
 
-    /** 对齐 pi 的 DEFAULT_HANDSHAKE_TIMEOUT_MS。 */
+    /** 默认握手超时时间（毫秒）。 */
     public static final long DEFAULT_HANDSHAKE_TIMEOUT_MS = 5_000;
 
     private final String serverId;
@@ -103,7 +103,7 @@ public class PiServer {
         return connections;
     }
 
-    /** 接收一个新的连接并返回其处理器。对齐 pi-agent 的 accept() 方法。 */
+    /** 接收一个新的传输层连接并返回其数据回调处理器。 */
     public ByteConnectionHandler accept(ByteConnection connection) {
         if (closing) {
             closeConnectionQuietly(connection);

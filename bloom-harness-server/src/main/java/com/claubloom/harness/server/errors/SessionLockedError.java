@@ -2,7 +2,7 @@ package com.claubloom.harness.server.errors;
 
 import com.claubloom.harness.protocol.result.ProtocolErrorCode;
 
-/** 对齐 pi-agent 的 SessionLockedError 会话已锁定异常 (code: "session_locked")。 */
+/** 会话已被其他操作锁定时抛出 (code: "session_locked")。 */
 public class SessionLockedError extends PiServerError {
 
     public SessionLockedError() {

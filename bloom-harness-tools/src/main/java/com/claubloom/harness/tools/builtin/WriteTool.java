@@ -18,8 +18,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 内置 Write 文件写入工具，以原子方式创建或覆盖文件内容。
- * 严格对齐 pi-agent 的 write.ts 实现规范。
+ * 内置 Write 工具，以原子方式（先写临时文件再移动）创建或完整覆盖文件内容。
+ * 自动创建父级目录。
  */
 @Slf4j
 @Component

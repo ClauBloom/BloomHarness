@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 映射到 SQLite 'sessions' 表的实体。
- * 与 pi 的 001_initial.sql sessions 表结构直接对应。
+ * 映射到 SQLite 'sessions' 表的实体，持有会话 ID、创建时间、工作目录等元信息。
  */
 @Data
 @Builder

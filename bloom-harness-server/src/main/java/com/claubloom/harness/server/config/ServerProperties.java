@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * 服务器模块配置属性（bloom-harness.server.*）。
- * 对齐 pi 的 PiServerOptions（maxFrameLength、handshakeTimeoutMs、serverId）。
+ * 包含服务器标识、帧大小上限与握手超时等协议级参数。
  */
 @Getter
 @Setter

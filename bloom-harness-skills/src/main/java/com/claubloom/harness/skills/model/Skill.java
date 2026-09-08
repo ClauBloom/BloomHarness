@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 /**
  * 表示一个包含元数据与指令的 Agent Skill。
- * 与 pi 的 Skill 接口及 Agent Skills 标准保持一致。
+ * 名称仅允许小写字母、数字与连字符，描述为必填项。
  */
 public record Skill(
         String name,

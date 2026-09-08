@@ -18,7 +18,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * 扩展管理器：管理已安装的扩展、分发生命周期钩子，
  * 并将扩展贡献的工具注册到 ToolRegistry。
- * 直接对齐 pi 的扩展运行器与生命周期分发。
  */
 @Slf4j
 @Component

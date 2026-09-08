@@ -1,7 +1,7 @@
 package com.claubloom.harness.server.connection;
 
 /**
- * 对齐 pi 在 packages/server/src/connection.ts 中的 ConnectionStage 联合类型。
+ * 连接生命周期阶段枚举：等待 Hello → 握手中 → 就绪 → 关闭中 → 已关闭。
  */
 public enum ConnectionStage {
     AWAITING_HELLO,

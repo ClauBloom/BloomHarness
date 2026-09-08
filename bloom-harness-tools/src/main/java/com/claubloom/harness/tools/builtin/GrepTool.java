@@ -21,8 +21,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * 内置 Grep 工具，用于递归的正则 / 字面量内容搜索。
- * 严格对齐 pi-agent 的 grep.ts 实现规范。
+ * 内置 Grep 工具，递归搜索文件内容并返回匹配行及行号。
+ * 支持正则表达式与大小写不敏感模式，自动跳过 .git 等非源码目录。
  */
 @Slf4j
 @Component

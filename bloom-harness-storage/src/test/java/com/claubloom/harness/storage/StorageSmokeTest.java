@@ -29,8 +29,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 阶段 4 SQLite 会话存储冒烟测试(TC-P4-01)。
- * 直接对应 pi 的 001_initial.sql 与 SQLite repo 测试套件。
+ * 阶段 4 SQLite 会话存储冒烟测试（TC-P4-01）。
+ * 验证会话生命周期、对话记录序列化与快照恢复的正确性。
  */
 public class StorageSmokeTest {
 

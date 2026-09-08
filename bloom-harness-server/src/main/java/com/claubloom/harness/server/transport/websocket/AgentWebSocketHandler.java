@@ -14,9 +14,8 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 /**
- * 通过 /ws/agent 承载分帧 pi 协议的 WebSocket 端点。
- * 对齐 pi 在 packages/server/src/listener.ts 中的 ByteConnectionAcceptor 装配，
- * 按 TEST.md TC-P4-02 的要求适配到 Spring 的 WebSocket 传输。
+ * 通过 /ws/agent 端点承载分帧二进制协议的 WebSocket 处理器。
+ * 将 Spring WebSocket 的连接建立/数据接收/关闭/错误事件桥接到 PiServer。
  */
 @Slf4j
 @RequiredArgsConstructor

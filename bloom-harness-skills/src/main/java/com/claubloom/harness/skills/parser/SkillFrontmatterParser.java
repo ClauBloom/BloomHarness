@@ -8,8 +8,9 @@ import java.nio.file.Path;
 import java.util.Map;
 
 /**
- * 为 Agent Skills 解析 Markdown 元信息头与正文。
- * 与 pi 的 frontmatter.ts 以及 skills.ts 中 loadSkillFromFile 实现保持一致。
+ * 解析 Skill Markdown 文件的 YAML 元信息头（frontmatter）与正文内容。
+ * 支持从元信息头提取名称、描述及 disable-model-invocation 标志；
+ * 若未指定名称，则回退使用目录名或基础文件名并规范化。
  */
 public class SkillFrontmatterParser {
 

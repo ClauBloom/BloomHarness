@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * PathSandbox 实现工作区文件系统的安全隔离，严格防止路径遍历（../）越界访问。
- * 深度对齐 pi-agent 的安全沙箱防护体系。
+ * 文件系统安全沙箱：将所有路径操作限制在工作区根目录及额外允许的根目录内，
+ * 严格防止路径遍历（../）越界访问。
  */
 public class PathSandbox {
 
@@ -50,7 +50,7 @@ public class PathSandbox {
             return baseRoot;
         }
 
-        // 清理用户输入: 去除首尾 Unicode 空格以及开头的 @（若有）（对应 pi 的 normalizePath）
+        // 清理用户输入: 去除首尾 Unicode 空格以及开头的 @（若有）
         String cleanPath = rawPath.trim();
         if (cleanPath.startsWith("@")) {
             cleanPath = cleanPath.substring(1).trim();

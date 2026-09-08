@@ -17,8 +17,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * AgentLoop 负责在 Java 21 虚拟线程中管理智能体的状态机流转与单轮 (Turn) 循环执行。
- * 完整对齐 pi-agent 的 agent-loop 状态生命周期与多轮推理推进。
+ * 智能体推理循环：在 Java 21 虚拟线程中管理状态机流转与多轮 (Turn) 推理。
+ * 每轮循环调用 LLM，若响应包含工具调用则执行工具并将结果注入上下文后继续下一轮，
+ * 直至 LLM 给出无工具调用的最终响应或触发终止条件。
  */
 @Slf4j
 @Component

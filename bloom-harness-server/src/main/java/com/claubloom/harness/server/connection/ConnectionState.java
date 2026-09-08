@@ -9,8 +9,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 按连接划分的握手状态机。
- * 对齐 pi 在 packages/server/src/connection.ts 中的 ConnectionState。
+ * 单条连接的状态容器：追踪握手阶段、已附加的会话 ID 集合，
+ * 并持有该连接的帧解码器与断开标记。
  */
 @Getter
 public class ConnectionState {
@@ -32,7 +32,7 @@ public class ConnectionState {
         this.decoder = new ClientMessageDecoder();
     }
 
-    /** 对齐 pi 的 isTerminalConnection。 */
+    /** 判断连接是否已进入不可恢复的终态（已断开或正在/已关闭）。 */
     public boolean isTerminal() {
         return disconnected.get()
                 || stage == ConnectionStage.CLOSING

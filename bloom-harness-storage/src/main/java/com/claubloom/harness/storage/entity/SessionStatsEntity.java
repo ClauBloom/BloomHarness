@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 映射到 SQLite 'session_stats' 表的实体。
- * 与 pi 的 001_initial.sql session_stats 表结构直接对应。
+ * 映射到 SQLite 'session_stats' 表的实体，记录单个会话的消息数与令牌用量统计。
  */
 @Data
 @Builder

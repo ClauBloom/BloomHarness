@@ -9,7 +9,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 
 /**
- * 启动时执行 SQLite 表结构迁移,与 pi 的 001_initial.sql 完全对应。
+ * 应用启动时执行 SQLite 表结构初始化，创建 sessions、entries、session_stats 三张核心表。
  */
 @Slf4j
 @Component

@@ -3,7 +3,7 @@ package com.claubloom.harness.server.errors;
 import com.claubloom.harness.protocol.result.ProtocolErrorCode;
 import static com.claubloom.harness.server.errors.PiServerErrors.NOT_IMPLEMENTED_MESSAGE;
 
-/** 对齐 pi-agent 的 NotImplementedError 尚未实现异常 (code: "not_implemented")。 */
+/** 操作尚未实现时抛出的协议错误 (code: "not_implemented")。 */
 public class NotImplementedError extends PiServerError {
 
     public NotImplementedError() {

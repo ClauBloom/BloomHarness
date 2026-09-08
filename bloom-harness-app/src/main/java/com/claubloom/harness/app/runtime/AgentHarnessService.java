@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * 基于 SQLite 存储与 AgentLoop 运行时的持久会话服务。
- * 对应 pi 的 PiServerService 边界(listSessions/listModels/createSession/openSession)。
+ * 负责会话的创建、打开、模型列表查询，以及活跃运行时的生命周期管理。
  */
 @Slf4j
 @Component

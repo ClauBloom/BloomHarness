@@ -9,7 +9,6 @@ import org.springframework.web.socket.WebSocketSession;
 /**
  * 将 Spring 的 WebSocketSession 适配为服务器的 ByteConnection 抽象，
  * 将每个帧的负载作为一条二进制 WebSocket 消息发送。
- * 对齐 pi 的传输层 ByteConnection 实现（如 transports/unix）。
  */
 public class WebSocketByteConnection implements ByteConnection {
 

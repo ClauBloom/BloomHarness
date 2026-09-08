@@ -1,8 +1,8 @@
 package com.claubloom.harness.protocol.codec;
 
 /**
- * 带长度前缀的线上格式的静态帧辅助工具。
- * 忠实移植自 pi 的 protocol/src/framing.ts 常量以及 encodeFrame/assertCompleteFrame。
+ * 带长度前缀的二进制帧编码/校验工具类。
+ * 提供 4 字节大端序长度前缀的帧编码、帧完整性断言以及帧长度上限解析。
  */
 public final class FrameCodec {
 
@@ -10,7 +10,7 @@ public final class FrameCodec {
     public static final int FRAME_HEADER_LENGTH = 4;
     private static final long MAX_UINT32 = 0xffff_ffffL;
 
-    /** 单个数据帧载荷的默认上限：16 MiB（对齐 pi-agent 规范）。 */
+    /** 单个数据帧载荷的默认上限：16 MiB。 */
     public static final int DEFAULT_MAX_FRAME_LENGTH = 16 * 1024 * 1024;
 
     private FrameCodec() {

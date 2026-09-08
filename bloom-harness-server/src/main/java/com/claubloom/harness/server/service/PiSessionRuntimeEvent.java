@@ -3,8 +3,8 @@ package com.claubloom.harness.server.service;
 import com.claubloom.harness.protocol.stream.TranscriptProgress;
 
 /**
- * 由实时会话运行时发出的事件。
- * 对齐 pi 在 packages/server/src/types.ts 中的 PiSessionRuntimeEvent 联合类型。
+ * 由实时会话运行时发出的事件密封接口。
+ * 包含快照变更、进度通知与致命错误三种事件类型。
  */
 public sealed interface PiSessionRuntimeEvent {
 

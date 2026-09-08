@@ -52,9 +52,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 /**
- * 阶段 4 服务器冒烟测试（TC-P4-02）：分帧 pi 协议的握手、命令
- * 执行，以及基于内存字节连接的实时事件广播。
- * 对齐 pi 的服务器测试套件（TestSessionRuntime 语义）。
+ * 阶段 4 服务器冒烟测试（TC-P4-02）：基于内存字节连接验证
+ * 分帧协议握手、命令执行与实时事件广播的完整流程。
  */
 public class ServerSmokeTest {
 
@@ -196,7 +195,7 @@ public class ServerSmokeTest {
     @Timeout(30)
     @DisplayName("protocol violations produce hello_error and close the connection")
     void shouldFailProtocolOnInvalidFirstMessage() throws Exception {
-        // 第一条消息必须是 hello（pi server.ts dispatchMessage 约定）
+        // 第一条消息必须是 hello（dispatchMessage 约定）
         sendClient(new RequestEnvelope("req-x",
                 new com.claubloom.harness.protocol.command.ListCommand()));
         ServerMessage message = nextMessage();
@@ -253,7 +252,7 @@ public class ServerSmokeTest {
     }
 
     // ------------------------------------------------------------------
-    // 对齐 pi 的 server/src/testing 的测试替身
+    // 测试替身
     // ------------------------------------------------------------------
 
     private static final class TestServerService implements PiServerService {

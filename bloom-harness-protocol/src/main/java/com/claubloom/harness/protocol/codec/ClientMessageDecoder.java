@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 从字节流中增量解码带帧结构的客户端报文。
- * 严格对齐 pi-agent 的 ClientMessageDecoder 编解码规范。
+ * 基于帧解码器从字节流中增量解码客户端协议消息。
+ * 将原始字节块经帧提取后反序列化为 {@link ClientMessage} 对象。
  */
 public final class ClientMessageDecoder {
 

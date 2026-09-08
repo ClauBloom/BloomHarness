@@ -273,7 +273,7 @@ public class StreamAdapter {
     }
 
     /**
-     * 将 OpenAI 原始流式 JSON 数据行解析为统一的数据分片 UnifiedStreamChunk。
+     * 将 OpenAI 格式的流式 JSON 数据行解析为统一的数据分片 UnifiedStreamChunk。
      * 兼容性包装：委托给 ai-router-core 的 DeltaJsonParser，避免重复维护 SSE 解析逻辑。
      */
     public UnifiedStreamChunk parseOpenAiChunk(String jsonLine) {
@@ -320,7 +320,7 @@ public class StreamAdapter {
     }
 
     /**
-     * 从 Anthropic message_start 原始 data 行提取 usage（input_tokens -> prompt_tokens）。
+     * 从 Anthropic message_start 数据行提取 usage（input_tokens -> prompt_tokens）。
      */
     private Map<String, Integer> extractAnthropicMessageStartUsage(String dataLine) {
         try {

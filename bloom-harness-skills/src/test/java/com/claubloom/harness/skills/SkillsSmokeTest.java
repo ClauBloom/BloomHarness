@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * 阶段 3：Agent Skills 冒烟测试（TC-P3-01 与 TC-P3-02）。
- * 与 pi 的 skills.test.ts 及 Agent Skills 标准保持一致。
+ * 验证技能元信息头解析、多目录优先级覆盖、XML 提示词注入与工具执行。
  */
 public class SkillsSmokeTest {
 

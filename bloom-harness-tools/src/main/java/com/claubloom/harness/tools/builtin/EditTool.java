@@ -18,8 +18,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 内置 Edit 工具，用于带唯一性校验的精确字面量替换。
- * 严格对齐 pi-agent 的 edit.ts 实现规范。
+ * 内置 Edit 工具，执行带唯一性校验的精确字面量替换。
+ * 默认要求目标字符串在文件中仅出现一次；可通过 replace_all 参数允许批量替换。
  */
 @Slf4j
 @Component
