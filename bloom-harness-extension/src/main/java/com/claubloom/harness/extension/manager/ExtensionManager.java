@@ -16,9 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Extension Manager managing installed extensions, dispatching lifecycle hooks,
- * and registering extension-contributed tools into ToolRegistry.
- * Directly mirrors pi's extension runner and lifecycle dispatching.
+ * 扩展管理器：管理已安装的扩展、分发生命周期钩子，
+ * 并将扩展贡献的工具注册到 ToolRegistry。
+ * 直接对齐 pi 的扩展运行器与生命周期分发。
  */
 @Slf4j
 @Component
@@ -30,8 +30,8 @@ public class ExtensionManager {
     private final List<ExtensionHook> hooks = new CopyOnWriteArrayList<>();
 
     /**
-     * Register a new Extension plugin.
-     * Automatically registers its hook and contributed tools.
+     * 注册一个新的扩展插件。
+     * 自动注册该扩展的钩子及其贡献的工具。
      */
     public synchronized void registerExtension(Extension extension) {
         if (extension == null) return;
@@ -65,7 +65,7 @@ public class ExtensionManager {
         return Collections.unmodifiableCollection(extensions.values());
     }
 
-    // Lifecycle hook dispatchers
+    // 生命周期钩子分发器
 
     public void fireSessionStart(String sessionId) {
         for (ExtensionHook hook : hooks) {

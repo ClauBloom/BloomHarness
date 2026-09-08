@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * Metadata definition of an AI model supported by the system.
+ * 系统支持的 AI 模型的元数据定义。
  */
 public record ModelMetadata(
         @JsonProperty(value = "provider", required = true)

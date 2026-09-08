@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.command;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Detach client from a session.
+ * 将客户端从会话中分离。
  */
 public record DetachCommand(
         @JsonProperty(value = "command", defaultValue = "detach")

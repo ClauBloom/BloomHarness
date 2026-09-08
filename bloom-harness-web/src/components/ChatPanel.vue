@@ -25,7 +25,7 @@ const inputPrompt = ref('');
 const messagesContainer = ref<HTMLDivElement | null>(null);
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
 
-// Model Selector State
+// 模型选择器状态
 interface ProviderItem {
   providerId: string;
   name: string;
@@ -36,7 +36,7 @@ const selectedModelKey = ref<string>(localStorage.getItem('bloom_selected_model'
 
 onMounted(async () => {
   await loadAvailableModels();
-  // Listen for provider updates from SettingsModal
+  // 侦听来自 SettingsModal 的供应商更新事件
   window.addEventListener('bloom:providers-updated', loadAvailableModels);
 });
 
@@ -45,7 +45,7 @@ async function loadAvailableModels() {
     const res = await fetch('/api/config/providers');
     if (res.ok) {
       providers.value = await res.json();
-      // Auto select saved model or first available model
+      // 自动选中已保存的模型,或第一个可用的模型
       const saved = localStorage.getItem('bloom_selected_model');
       if (saved && modelOptions.value.some(opt => opt.value === saved)) {
         selectedModelKey.value = saved;
@@ -101,7 +101,7 @@ let userScrolledUp = false;
 function onMessagesScroll() {
   if (!messagesContainer.value) return;
   const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
-  // If user scrolled up more than 60px from bottom, respect user's position
+  // 若用户向上滚动超过底部 60px,则尊重用户的滚动位置,不强制吸底
   userScrolledUp = scrollHeight - (scrollTop + clientHeight) > 60;
 }
 
@@ -161,7 +161,7 @@ function applyQuickPrompt(promptText: string) {
 
 <template>
   <div class="flex flex-col h-full bg-gray-950 text-gray-100">
-    <!-- Top Header Bar -->
+    <!-- 顶部标题栏 -->
     <header class="h-14 px-6 border-b border-gray-800 bg-gray-900/60 backdrop-blur flex items-center justify-between shrink-0">
       <div class="flex items-center gap-3 min-w-0">
         <h1 class="text-sm font-semibold text-gray-200 truncate">
@@ -187,7 +187,7 @@ function applyQuickPrompt(promptText: string) {
       </div>
     </header>
 
-    <!-- Error Banner -->
+    <!-- 错误横幅 -->
     <div v-if="store.errorMessage" class="px-6 py-2 bg-rose-950/80 border-b border-rose-800 text-rose-200 text-xs flex items-center justify-between animate-fadeIn">
       <div class="flex items-center gap-2">
         <AlertTriangle class="w-4 h-4 text-rose-400 shrink-0" />
@@ -196,9 +196,9 @@ function applyQuickPrompt(promptText: string) {
       <button @click="store.setError(null)" class="text-rose-300 hover:text-white text-xs underline ml-2">关闭</button>
     </div>
 
-    <!-- Messages Scroll Area -->
+    <!-- 消息滚动区域 -->
     <div ref="messagesContainer" class="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-      <!-- Empty State -->
+      <!-- 空状态 -->
       <div v-if="store.transcript.length === 0" class="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto py-12 space-y-6">
         <div class="w-16 h-16 rounded-2xl bg-purple-900/30 border border-purple-500/30 flex items-center justify-center shadow-lg shadow-purple-900/20">
           <Sparkles class="w-8 h-8 text-purple-400" />
@@ -210,7 +210,7 @@ function applyQuickPrompt(promptText: string) {
           </p>
         </div>
 
-        <!-- Quick Start Cards -->
+        <!-- 快速开始卡片 -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full text-left text-xs">
           <button 
             @click="applyQuickPrompt('检查当前项目目录结构并给出概要说明')"
@@ -229,11 +229,11 @@ function applyQuickPrompt(promptText: string) {
         </div>
       </div>
 
-      <!-- Transcript Messages -->
+      <!-- 对话消息列表 -->
       <template v-else>
         <MessageBubble v-for="msg in store.transcript" :key="msg.id" :message="msg" />
 
-        <!-- Streaming Real-time Preview -->
+        <!-- 流式实时预览 -->
         <div v-if="store.streamingText || store.activeThinking" class="flex gap-3 my-4 animate-fadeIn">
           <div class="w-8 h-8 rounded-full bg-purple-900/60 border border-purple-500/30 flex items-center justify-center shrink-0">
             <Loader2 class="w-4 h-4 text-purple-300 animate-spin" />
@@ -248,7 +248,7 @@ function applyQuickPrompt(promptText: string) {
       </template>
     </div>
 
-    <!-- Input Bar -->
+    <!-- 输入栏 -->
     <div class="p-4 border-t border-gray-800 bg-gray-900/70 backdrop-blur shrink-0">
       <div class="max-w-4xl mx-auto">
         <div class="relative bg-gray-950 border border-gray-800 rounded-2xl focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-500 transition shadow-inner">
@@ -263,9 +263,9 @@ function applyQuickPrompt(promptText: string) {
             class="w-full bg-transparent resize-none px-4 pt-3.5 pb-12 text-sm text-gray-200 placeholder-gray-500 focus:outline-none disabled:opacity-50 max-h-[180px]"
           ></textarea>
 
-          <!-- Input Action Buttons (Model Selector + Send / Abort) -->
+          <!-- 输入操作按钮(模型选择器 + 发送/中止) -->
           <div class="absolute bottom-2.5 right-3 flex items-center gap-2">
-            <!-- Provider & Model Dropdown Selector -->
+            <!-- 供应商与模型下拉选择器 -->
             <div class="relative flex items-center">
               <div class="flex items-center gap-1.5 bg-gray-900/90 border border-gray-800 hover:border-gray-700 px-2.5 py-1.5 rounded-xl transition text-xs">
                 <Cpu class="w-3.5 h-3.5 text-purple-400 shrink-0" />
@@ -307,7 +307,7 @@ function applyQuickPrompt(promptText: string) {
             </button>
           </div>
         </div>
-        <!-- Bottom Status Bar: Current Workspace & Send Shortcut -->
+        <!-- 底部状态栏:当前工作区与发送快捷键 -->
         <div class="flex justify-between items-center px-2 pt-2 text-[11px] text-gray-500">
           <div class="flex items-center gap-1.5 min-w-0 max-w-[70%] group">
             <FolderGit2 class="w-3.5 h-3.5 text-purple-400 shrink-0" />

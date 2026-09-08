@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.model.ModelCost;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Token usage and cost accounting.
+ * 令牌用量与成本核算。
  */
 public record Usage(
         @JsonProperty(value = "input", defaultValue = "0")

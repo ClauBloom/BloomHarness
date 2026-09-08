@@ -8,8 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Entity mapped to SQLite 'sessions' table.
- * Directly mirrors pi's 001_initial.sql sessions schema.
+ * 映射到 SQLite 'sessions' 表的实体。
+ * 与 pi 的 001_initial.sql sessions 表结构直接对应。
  */
 @Data
 @Builder

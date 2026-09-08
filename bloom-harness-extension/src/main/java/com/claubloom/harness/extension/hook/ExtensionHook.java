@@ -7,8 +7,8 @@ import com.claubloom.harness.protocol.tool.ToolResult;
 import java.util.Map;
 
 /**
- * Lifecycle hook interface for BloomHarness extensions.
- * Directly mirrors pi's extension lifecycle event subscriptions.
+ * BloomHarness 扩展的生命周期钩子接口。
+ * 直接对齐 pi 的扩展生命周期事件订阅。
  */
 public interface ExtensionHook {
 

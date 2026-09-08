@@ -25,8 +25,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Session storage service for SQLite persistence.
- * Directly mirrors pi's repo.ts (sessions, entries, session_stats).
+ * 负责 SQLite 持久化的会话存储服务。
+ * 直接对应 pi 的 repo.ts(sessions、entries、session_stats)。
  */
 @Slf4j
 @Service
@@ -100,7 +100,7 @@ public class SessionStorageService {
 
             sessionEntryMapper.insert(entry);
 
-            // Update stats
+            // 更新统计信息
             SessionStatsEntity stats = sessionStatsMapper.selectById(sessionId);
             if (stats != null) {
                 stats.setMessageCount(stats.getMessageCount() + 1);

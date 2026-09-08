@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Represents a registered extension plugin.
+ * 表示一个已注册的扩展插件。
  */
 @Builder
 public record Extension(

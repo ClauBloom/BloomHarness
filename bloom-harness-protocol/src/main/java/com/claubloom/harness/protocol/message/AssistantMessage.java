@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * Assistant transcript message item with streaming / complete / error status.
+ * 助手对话记录消息条目,带流式 / 已完成 / 错误状态。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AssistantMessage(

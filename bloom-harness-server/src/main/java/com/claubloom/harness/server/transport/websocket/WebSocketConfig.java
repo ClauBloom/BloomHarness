@@ -8,7 +8,7 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 /**
- * Registers the /ws/agent endpoint for the framed pi protocol.
+ * 为分帧 pi 协议注册 /ws/agent 端点。
  */
 @Configuration
 @EnableWebSocket

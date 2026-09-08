@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.message.AgentMessage;
 import java.util.List;
 
 /**
- * Context slice prepared for summarization.
+ * 为生成摘要而准备的上下文切片。
  */
 public record CompactionPreparation(
         int cutPointIndex,

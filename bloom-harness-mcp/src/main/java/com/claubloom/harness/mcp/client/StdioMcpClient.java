@@ -17,7 +17,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Stdio-based MCP Client communicating with external MCP server process over JSON-RPC 2.0.
+ * 基于 Stdio 的 MCP Client，通过 JSON-RPC 2.0 与外部 MCP Server 进程通信。
  */
 @Slf4j
 public class StdioMcpClient implements McpClient {

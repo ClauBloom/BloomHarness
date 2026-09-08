@@ -37,7 +37,7 @@ async function handleRefresh() {
 
 <template>
   <div class="w-64 h-full bg-gray-900/90 border-r border-gray-800 flex flex-col shrink-0 select-none">
-    <!-- Brand Header -->
+    <!-- 品牌头部 -->
     <div class="h-14 px-4 border-b border-gray-800 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
         <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center shadow-md shadow-purple-900/30">
@@ -88,7 +88,7 @@ async function handleRefresh() {
       </div>
     </div>
 
-    <!-- Session List -->
+    <!-- 会话列表 -->
     <div class="flex-1 overflow-y-auto p-2 space-y-1">
       <div v-if="store.sessionList.length === 0" class="h-40 flex flex-col items-center justify-center text-center p-4">
         <Loader2 v-if="store.isCreatingSession" class="w-5 h-5 text-purple-400 animate-spin mb-2" />
@@ -113,7 +113,7 @@ async function handleRefresh() {
       </div>
     </div>
 
-    <!-- Footer CWD & Status -->
+    <!-- 底部 CWD 与状态 -->
     <div class="p-3 border-t border-gray-800 bg-gray-950/50 text-[11px] text-gray-400 flex flex-col gap-1">
       <div 
         @click="emit('openWorkspace')"

@@ -14,12 +14,12 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * Workspace directory browsing and validation REST API.
- * Enables the Web UI to:
- * - Query current default workspace and user home directory
- * - Browse host filesystem directories with security validation
- * - Validate arbitrary folder paths entered by users
- * - List recently used workspaces
+ * 工作区目录浏览与校验 REST API。
+ * 使 Web UI 能够：
+ * - 查询当前默认工作区与用户主目录
+ * - 在安全校验下浏览主机文件系统目录
+ * - 校验用户输入的任意文件夹路径
+ * - 列出最近使用过的工作区
  */
 @Slf4j
 @RestController
@@ -30,7 +30,7 @@ public class WorkspaceController {
     private final com.claubloom.harness.storage.service.SessionStorageService storage;
 
     /**
-     * Get basic environment info for workspaces: default directory, user home, OS.
+     * 获取工作区的基础环境信息：默认目录、用户主目录、操作系统。
      */
     @GetMapping("/current")
     public ResponseEntity<Map<String, Object>> getCurrentWorkspace() {
@@ -47,8 +47,8 @@ public class WorkspaceController {
     }
 
     /**
-     * Browse subdirectories of a given path.
-     * If path is empty, defaults to user.dir.
+     * 浏览给定路径的子目录。
+     * 若路径为空，则默认为 user.dir。
      */
     @GetMapping("/browse")
     public ResponseEntity<Map<String, Object>> browse(@RequestParam(value = "path", required = false) String rawPath) {
@@ -81,7 +81,7 @@ public class WorkspaceController {
             stream
                 .filter(p -> {
                     try {
-                        // Exclude hidden directories starting with '.' unless desired, and ignore inaccessible files
+                        // 排除以 '.' 开头的隐藏目录（除非需要），并忽略不可访问的文件
                         String fileName = p.getFileName().toString();
                         if (fileName.startsWith(".") && !fileName.equals(".git")) {
                             return false;
@@ -92,7 +92,7 @@ public class WorkspaceController {
                     }
                 })
                 .sorted(Comparator.comparing(p -> p.getFileName().toString().toLowerCase(Locale.ROOT)))
-                .limit(100) // Keep response bounded
+                .limit(100) // 限制响应大小
                 .forEach(dir -> {
                     Map<String, Object> item = new HashMap<>();
                     item.put("name", dir.getFileName().toString());
@@ -114,7 +114,7 @@ public class WorkspaceController {
     }
 
     /**
-     * Validate whether a path exists and is a readable directory.
+     * 校验某个路径是否存在且为可读目录。
      */
     @PostMapping("/validate")
     public ResponseEntity<Map<String, Object>> validatePath(@RequestBody Map<String, String> body) {
@@ -150,12 +150,12 @@ public class WorkspaceController {
     }
 
     /**
-     * Get recent workspace directories from past sessions.
+     * 获取历史会话中使用过的最近工作区目录。
      */
     @GetMapping("/recent")
     public ResponseEntity<List<String>> getRecentWorkspaces() {
         Set<String> uniqueCwds = new LinkedHashSet<>();
-        // Current user dir first
+        // 当前用户目录优先
         uniqueCwds.add(System.getProperty("user.dir"));
 
         try {
@@ -173,7 +173,7 @@ public class WorkspaceController {
     }
 
     /**
-     * Launch OS native folder selection dialog (Zenity/KDialog on Linux, AppleScript on macOS, PowerShell on Windows).
+     * 启动操作系统原生的文件夹选择对话框（Linux 上为 Zenity/KDialog，macOS 上为 AppleScript，Windows 上为 PowerShell）。
      */
     @PostMapping("/pick-folder")
     public java.util.concurrent.CompletableFuture<ResponseEntity<Map<String, Object>>> pickFolderDialog(

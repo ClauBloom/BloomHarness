@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Built-in Bash tool for executing shell commands with timeout and tail truncation.
+ * 内置 Bash 工具，用于执行带超时与尾部截断的 shell 命令。
  * 严格对齐 pi-agent 的 bash.ts 实现规范。
  */
 @Slf4j
@@ -31,8 +31,8 @@ import java.util.concurrent.TimeUnit;
 public class BashTool implements ToolDefinition {
 
     private final PathSandbox pathSandbox;
-    private static final long DEFAULT_TIMEOUT_MS = 60_000L; // 60s default timeout
-    private static final long MAX_TIMEOUT_MS = 600_000L;    // 10min max timeout
+    private static final long DEFAULT_TIMEOUT_MS = 60_000L; // 默认超时 60 秒
+    private static final long MAX_TIMEOUT_MS = 600_000L;    // 最长超时 10 分钟
 
     @Override
     public String name() {
@@ -91,7 +91,7 @@ public class BashTool implements ToolDefinition {
 
             ProcessBuilder pb = new ProcessBuilder(processCmd);
             pb.directory(workingDirectory.toFile());
-            pb.redirectErrorStream(true); // Merge stderr into stdout stream
+            pb.redirectErrorStream(true); // 将 stderr 合并到 stdout 流中
 
             Process process = null;
             try {
@@ -112,7 +112,7 @@ public class BashTool implements ToolDefinition {
 
                 boolean finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
                 if (!finished) {
-                    // Forcefully terminate process and all descendant subprocesses (mirrors pi's killProcessTree)
+                    // 强制终止进程及其全部后代子进程（对应 pi 的 killProcessTree）
                     process.descendants().forEach(ProcessHandle::destroyForcibly);
                     process.destroyForcibly();
                     readerThread.interrupt();

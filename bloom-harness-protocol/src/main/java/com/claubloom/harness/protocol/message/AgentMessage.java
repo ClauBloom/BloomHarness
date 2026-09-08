@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
- * Sealed interface representing all agent message types.
+ * 表示所有智能体消息类型的密封接口。
  */
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

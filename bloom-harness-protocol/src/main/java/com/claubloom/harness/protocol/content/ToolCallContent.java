@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.content;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Tool call message content item inside Assistant message.
+ * 助手消息中的工具调用消息内容条目。
  */
 public record ToolCallContent(
         @JsonProperty(value = "type", defaultValue = "toolCall")

@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.session.ThinkingLevel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Change the active thinking level for an existing session.
+ * 更改现有会话的活动思考级别。
  */
 public record SetThinkingCommand(
         @JsonProperty(value = "command", defaultValue = "set_thinking")

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Configuration properties for AI adapters and providers.
+ * AI 适配器与上游供应商的配置属性。
  */
 @Data
 @ConfigurationProperties(prefix = "bloom-harness.ai")
@@ -20,12 +20,12 @@ public class AiProperties {
     private String defaultModel = "";
 
     /**
-     * Default thinking level (off, low, medium, high, max).
+     * 默认思考级别（off、low、medium、high、max）。
      */
     private String defaultThinkingLevel = "off";
 
     /**
-     * List of configured upstream AI providers.
+     * 已配置的上游 AI 供应商列表。
      */
     private List<ProviderConfig> providers = new ArrayList<>();
 }

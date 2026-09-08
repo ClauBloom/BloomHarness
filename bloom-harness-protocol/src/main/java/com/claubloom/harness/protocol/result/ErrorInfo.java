@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Detailed error info descriptor.
+ * 详细的错误信息描述。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ErrorInfo(

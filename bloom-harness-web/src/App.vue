@@ -39,10 +39,10 @@ async function handleSelectWorkspace(path: string, createNewSession: boolean) {
       />
     </div>
 
-    <!-- AI Router Settings Modal -->
+    <!-- AI Router 设置弹窗 -->
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
 
-    <!-- Workspace Selector Modal -->
+    <!-- 工作区选择弹窗 -->
     <WorkspaceModal 
       v-if="showWorkspaceModal" 
       :current-cwd="store.currentSession?.cwd"

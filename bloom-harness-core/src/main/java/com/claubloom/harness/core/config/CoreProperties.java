@@ -4,24 +4,24 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Configuration properties for BloomHarness Core engine.
+ * BloomHarness Core 引擎的配置属性。
  */
 @Data
 @ConfigurationProperties(prefix = "bloom-harness.core")
 public class CoreProperties {
 
     /**
-     * Maximum turns allowed per Agent execution loop.
+     * 单个智能体执行循环允许的最大轮次。
      */
     private int maxTurns = 100;
 
     /**
-     * Threshold ratio (0.0 - 1.0) of context window usage to trigger compaction.
+     * 触发上下文压缩的上下文窗口用量阈值比例（0.0 - 1.0）。
      */
     private double compactionThreshold = 0.8;
 
     /**
-     * Number of recent messages retained in full during compaction.
+     * 压缩期间完整保留的最近消息条数。
      */
     private int compactionRetainedTail = 6;
 }

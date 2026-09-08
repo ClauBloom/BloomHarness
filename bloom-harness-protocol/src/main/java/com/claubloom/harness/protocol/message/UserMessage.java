@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * User transcript message item.
+ * 用户对话记录消息条目。
  */
 public record UserMessage(
         @JsonProperty(value = "id", required = true)

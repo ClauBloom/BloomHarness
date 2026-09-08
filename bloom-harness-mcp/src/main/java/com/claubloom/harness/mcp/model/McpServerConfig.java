@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Configuration for an upstream MCP Server.
+ * 上游 MCP Server 的配置。
  */
 @Builder
 public record McpServerConfig(

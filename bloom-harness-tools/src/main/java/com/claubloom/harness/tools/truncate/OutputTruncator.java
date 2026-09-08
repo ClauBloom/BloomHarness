@@ -5,18 +5,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Shared truncation utilities for tool outputs.
- * Directly mirrors pi's truncate.ts.
+ * 工具输出的共享截断工具。
+ * 直接对应 pi 的 truncate.ts。
  *
- * Truncation is based on two independent limits - whichever is hit first wins:
- * - Line limit (default: 2000 lines)
- * - Byte limit (default: 50KB)
+ * 截断基于两个相互独立的限制——先命中的限制生效:
+ * - 行数限制(默认: 2000 行)
+ * - 字节限制(默认: 50KB)
  */
 public class OutputTruncator {
 
     public static final int DEFAULT_MAX_LINES = 2000;
     public static final int DEFAULT_MAX_BYTES = 50 * 1024; // 50KB
-    public static final int GREP_MAX_LINE_LENGTH = 500;    // Max chars per grep match line
+    public static final int GREP_MAX_LINE_LENGTH = 500;    // grep 每行匹配结果的最大字符数
 
     public record TruncationResult(
             String content,
@@ -30,7 +30,7 @@ public class OutputTruncator {
     ) {}
 
     /**
-     * Format bytes as human-readable size string (e.g. 50.0KB).
+     * 将字节数格式化为人类可读的大小字符串（例如 50.0KB）。
      */
     public static String formatSize(long bytes) {
         if (bytes < 1024) {
@@ -43,8 +43,8 @@ public class OutputTruncator {
     }
 
     /**
-     * Truncate content from the head (keep first N lines/bytes).
-     * Suitable for file reads where you want to see the beginning.
+     * 从头部截断内容（保留前 N 行/字节）。
+     * 适用于需要查看文件开头的文件读取场景。
      */
     public static TruncationResult truncateHead(String content) {
         return truncateHead(content, DEFAULT_MAX_LINES, DEFAULT_MAX_BYTES);
@@ -102,8 +102,8 @@ public class OutputTruncator {
     }
 
     /**
-     * Truncate content from the tail (keep last N lines/bytes).
-     * Suitable for bash outputs where you want to see the end (error stack traces, exit codes).
+     * 从尾部截断内容（保留最后 N 行/字节）。
+     * 适用于 bash 输出场景，可查看结尾部分（错误堆栈、退出码）。
      */
     public static TruncationResult truncateTail(String content) {
         return truncateTail(content, DEFAULT_MAX_LINES, DEFAULT_MAX_BYTES);

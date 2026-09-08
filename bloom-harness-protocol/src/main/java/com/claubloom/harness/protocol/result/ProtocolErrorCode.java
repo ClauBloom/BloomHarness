@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Standard protocol error codes.
+ * 标准协议错误码。
  */
 public enum ProtocolErrorCode {
     VERSION("version"),

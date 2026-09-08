@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * ContextCompactor implements context window compaction and cut point discovery matching pi compaction.ts.
+ * ContextCompactor 实现上下文窗口压缩与切割点查找，与 pi 的 compaction.ts 保持一致。
  */
 @Slf4j
 @Component
@@ -20,11 +20,11 @@ public class ContextCompactor {
     private static final int DEFAULT_RETAINED_TAIL_SIZE = 4;
 
     /**
-     * Determine if context messages need compaction based on threshold.
+     * 根据阈值判断上下文消息是否需要进行压缩。
      *
-     * @param totalEstimatedTokens current token count
-     * @param contextWindow max tokens allowed
-     * @param threshold compaction trigger threshold (e.g. 0.8 for 80%)
+     * @param totalEstimatedTokens 当前令牌总数
+     * @param contextWindow 允许的最大令牌数
+     * @param threshold 压缩触发阈值（例如 0.8 表示 80%）
      */
     public boolean shouldCompact(int totalEstimatedTokens, int contextWindow, double threshold) {
         if (contextWindow <= 0) {
@@ -34,11 +34,11 @@ public class ContextCompactor {
     }
 
     /**
-     * Find a safe cut point in the message history so that tool calls and tool results stay paired.
+     * 在消息历史中查找安全的切割点，使工具调用与工具结果保持成对。
      *
-     * @param messages entire message list
-     * @param retainedTailSize number of recent messages to retain in full
-     * @return preparation object with slice indices
+     * @param messages 完整消息列表
+     * @param retainedTailSize 需要完整保留的最近消息条数
+     * @return 携带切片索引的压缩准备对象
      */
     public Optional<CompactionPreparation> prepareCompaction(List<AgentMessage> messages, int retainedTailSize) {
         if (messages == null || messages.size() <= (retainedTailSize <= 0 ? DEFAULT_RETAINED_TAIL_SIZE : retainedTailSize)) {
@@ -48,11 +48,11 @@ public class ContextCompactor {
         int tailSize = retainedTailSize > 0 ? retainedTailSize : DEFAULT_RETAINED_TAIL_SIZE;
         int targetCutPoint = messages.size() - tailSize;
 
-        // Ensure we don't cut in the middle of a ToolCall / ToolResult sequence
+        // 确保不会在 ToolCall / ToolResult 序列中间进行切割
         int safeCutPoint = targetCutPoint;
         while (safeCutPoint > 0) {
             AgentMessage msg = messages.get(safeCutPoint);
-            // If the message at cutPoint is a ToolResultMessage, move cutPoint before its AssistantMessage
+            // 若 cutPoint 处的消息为 ToolResultMessage，则将 cutPoint 前移到其 AssistantMessage 之前
             if ("tool".equalsIgnoreCase(msg.role())) {
                 safeCutPoint--;
             } else {
@@ -73,7 +73,7 @@ public class ContextCompactor {
     }
 
     /**
-     * Rough token estimation (4 chars ~ 1 token heuristic).
+     * 粗略的令牌估算（启发式：4 个字符约等于 1 个令牌）。
      */
     public int estimateTokens(List<AgentMessage> messages) {
         if (messages == null) {

@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.content;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Text message content item.
+ * 文本消息内容条目。
  */
 public record TextContent(
         @JsonProperty(value = "type", defaultValue = "text")

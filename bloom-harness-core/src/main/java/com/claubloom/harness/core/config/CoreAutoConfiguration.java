@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Bean;
 import java.util.List;
 
 /**
- * Spring Boot AutoConfiguration for BloomHarness Core module.
+ * BloomHarness Core 模块的 Spring Boot 自动配置。
  */
 @AutoConfiguration
 @EnableConfigurationProperties(CoreProperties.class)

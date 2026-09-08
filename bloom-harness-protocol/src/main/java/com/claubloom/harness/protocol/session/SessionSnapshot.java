@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * Authoritative snapshot of a session's full state and transcript.
+ * 会话完整状态与对话记录的权威快照。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record SessionSnapshot(

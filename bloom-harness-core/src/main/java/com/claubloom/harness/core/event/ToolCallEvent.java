@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.tool.ToolCall;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Event fired before a tool call is executed.
+ * 在工具调用执行前触发的事件。
  */
 public record ToolCallEvent(
         @JsonProperty(value = "type", defaultValue = "tool_call")

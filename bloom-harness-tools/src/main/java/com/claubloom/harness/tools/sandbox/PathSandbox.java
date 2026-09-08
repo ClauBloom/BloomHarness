@@ -50,7 +50,7 @@ public class PathSandbox {
             return baseRoot;
         }
 
-        // Clean user input: trim Unicode spaces and leading @ if any (mirrors pi's normalizePath)
+        // 清理用户输入: 去除首尾 Unicode 空格以及开头的 @（若有）（对应 pi 的 normalizePath）
         String cleanPath = rawPath.trim();
         if (cleanPath.startsWith("@")) {
             cleanPath = cleanPath.substring(1).trim();

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 
 /**
- * Tool call invocation descriptor.
+ * 一次工具调用的描述信息。
  */
 public record ToolCall(
         @JsonProperty(value = "toolCallId", required = true)

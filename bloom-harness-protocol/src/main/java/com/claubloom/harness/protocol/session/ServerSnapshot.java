@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * Authoritative snapshot of server state including all sessions and available models.
+ * 服务器状态的权威快照,包含所有会话与可用模型。
  */
 public record ServerSnapshot(
         @JsonProperty(value = "serverId", required = true)

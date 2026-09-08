@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
- * Sealed interface for all messages sent from client to server.
+ * 表示客户端发送至服务器的所有消息的密封接口。
  */
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

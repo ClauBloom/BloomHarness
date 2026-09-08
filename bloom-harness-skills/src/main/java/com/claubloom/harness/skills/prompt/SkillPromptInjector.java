@@ -7,14 +7,14 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Formats visible skills for system prompt injection in Agent Skills standard XML format.
- * Directly mirrors pi's formatSkillsForPrompt in skills.ts.
+ * 以 Agent Skills 标准 XML 格式将可见技能格式化，供系统提示词注入使用。
+ * 与 pi 的 skills.ts 中 formatSkillsForPrompt 实现保持一致。
  */
 @Component
 public class SkillPromptInjector {
 
     /**
-     * Format visible skills into XML block per Agent Skills standard.
+     * 按 Agent Skills 标准将可见技能格式化为 XML 块。
      */
     public String formatSkillsForPrompt(Collection<Skill> skills) {
         if (skills == null || skills.isEmpty()) {
@@ -48,7 +48,7 @@ public class SkillPromptInjector {
     }
 
     /**
-     * Injects the formatted skills XML into an existing system prompt.
+     * 将格式化后的技能 XML 注入已有的系统提示词中。
      */
     public String injectIntoSystemPrompt(String systemPrompt, Collection<Skill> skills) {
         String skillsXml = formatSkillsForPrompt(skills);

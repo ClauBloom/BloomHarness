@@ -78,7 +78,7 @@ async function copyFullOutput() {
 
 <template>
   <div class="my-2 rounded-xl border border-gray-800 bg-gray-900/90 overflow-hidden text-xs shadow-sm">
-    <!-- Collapsible Header -->
+    <!-- 可折叠头部 -->
     <div 
       @click="isOpen = !isOpen"
       class="flex items-center justify-between px-3.5 py-2.5 bg-gray-800/50 cursor-pointer hover:bg-gray-800/80 transition select-none"
@@ -112,9 +112,9 @@ async function copyFullOutput() {
       </div>
     </div>
     
-    <!-- Expanded Detail Body -->
+    <!-- 展开的详情内容 -->
     <div v-if="isOpen" class="p-3.5 border-t border-gray-800/80 space-y-3 bg-black/40">
-      <!-- Tool Input -->
+      <!-- 工具输入 -->
       <div v-if="toolCall?.input">
         <div class="text-gray-400 mb-1 font-semibold flex items-center gap-1">
           <span>输入参数:</span>
@@ -122,7 +122,7 @@ async function copyFullOutput() {
         <pre class="p-2.5 bg-gray-950/80 border border-gray-800/80 rounded-lg text-gray-300 font-mono overflow-x-auto max-h-48 leading-relaxed">{{ JSON.stringify(toolCall.input, null, 2) }}</pre>
       </div>
 
-      <!-- Tool Execution Output -->
+      <!-- 工具执行输出 -->
       <div v-if="toolResult">
         <div class="flex items-center justify-between mb-1.5">
           <div class="text-gray-400 font-semibold flex items-center gap-1.5">
@@ -133,7 +133,7 @@ async function copyFullOutput() {
             </span>
           </div>
 
-          <!-- Output Actions -->
+          <!-- 输出操作 -->
           <div class="flex items-center gap-2">
             <button 
               type="button"
@@ -158,7 +158,7 @@ async function copyFullOutput() {
           </div>
         </div>
 
-        <!-- Preformatted Output Box with Max Height -->
+        <!-- 预格式化输出框(限制最大高度) -->
         <pre 
           class="p-3 bg-gray-950/90 border border-gray-800/80 rounded-lg font-mono overflow-x-auto text-emerald-300 text-[11px] leading-relaxed max-h-[380px] overflow-y-auto"
           :class="{ 'text-rose-300': toolResult.isError }"

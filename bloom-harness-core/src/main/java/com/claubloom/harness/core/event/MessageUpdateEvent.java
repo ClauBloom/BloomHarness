@@ -3,7 +3,7 @@ package com.claubloom.harness.core.event;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Event fired when a message streaming chunk updates (text/thinking/toolCall).
+ * 当消息的流式内容块更新时触发的事件（text/thinking/toolCall）。
  */
 public record MessageUpdateEvent(
         @JsonProperty(value = "type", defaultValue = "message_update")

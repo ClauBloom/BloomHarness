@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * Result returned by executing a tool.
+ * 执行工具后返回的结果。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ToolResult(

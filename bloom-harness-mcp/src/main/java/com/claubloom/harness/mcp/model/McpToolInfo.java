@@ -7,7 +7,7 @@ import lombok.Builder;
 import java.util.Map;
 
 /**
- * Metadata of a Tool exposed by an MCP Server.
+ * MCP Server 暴露的工具的元数据。
  */
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)

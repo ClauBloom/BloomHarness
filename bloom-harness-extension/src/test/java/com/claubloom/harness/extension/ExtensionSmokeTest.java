@@ -24,8 +24,8 @@ import java.util.concurrent.CompletableFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Phase 3 Smoke Tests for Extension Subsystem (TC-P3-03 & TC-P3-04).
- * Directly mirrors pi's extensions-runner.test.ts and extension types.
+ * 扩展子系统的第 3 阶段冒烟测试（TC-P3-03 与 TC-P3-04）。
+ * 直接对齐 pi 的 extensions-runner.test.ts 与扩展类型。
  */
 public class ExtensionSmokeTest {
 
@@ -41,12 +41,12 @@ public class ExtensionSmokeTest {
     }
 
     /**
-     * TC-P3-03: Extension Lifecycle Hook Execution and Tracing.
+     * TC-P3-03：扩展生命周期钩子的执行与追踪。
      */
     @Test
     @DisplayName("TC-P3-03: Extension lifecycle hooks should fire in correct sequence")
     void should_fireExtensionLifecycleHooksInSequence() {
-        // Arrange - Register an auditing extension
+        // 准备 - 注册一个审计扩展
         Extension auditExtension = Extension.builder()
                 .id("audit-extension")
                 .name("Audit Logging Plugin")
@@ -87,7 +87,7 @@ public class ExtensionSmokeTest {
 
         extensionManager.registerExtension(auditExtension);
 
-        // Act - Simulate Agent Session Flow
+        // 执行 - 模拟智能体会话流程
         String sessionId = "sess-100";
         AgentContext context = new AgentContext();
         context.setSessionId(sessionId);
@@ -114,7 +114,7 @@ public class ExtensionSmokeTest {
         extensionManager.fireAfterTurn(context, response);
         extensionManager.fireSessionEnd(sessionId);
 
-        // Assert - Verify strict chronological trace
+        // 断言 - 验证事件轨迹严格按时间顺序排列
         assertThat(eventTrace).containsExactly(
                 "sessionStart:sess-100",
                 "beforeTurn:sess=sess-100",
@@ -126,12 +126,12 @@ public class ExtensionSmokeTest {
     }
 
     /**
-     * TC-P3-04: Dynamic Tool Registration via Extension.
+     * TC-P3-04：通过扩展动态注册工具。
      */
     @Test
     @DisplayName("TC-P3-04: Extensions should dynamically register custom tools into ToolRegistry")
     void should_dynamicallyRegisterCustomTools() throws Exception {
-        // Arrange - Custom calculator tool contributed by extension
+        // 准备 - 由扩展贡献的自定义计算器工具
         ToolDefinition calcTool = new ToolDefinition() {
             @Override
             public String name() {
@@ -167,16 +167,16 @@ public class ExtensionSmokeTest {
                 .tools(List.of(calcTool))
                 .build();
 
-        // Act - Register extension
+        // 执行 - 注册扩展
         extensionManager.registerExtension(mathPlugin);
 
-        // Assert - Tool is available in ToolRegistry
+        // 断言 - 工具在 ToolRegistry 中可用
         assertThat(toolRegistry.contains("calculator")).isTrue();
         ToolDefinition retrievedTool = toolRegistry.find("calculator").orElse(null);
         assertThat(retrievedTool).isNotNull();
         assertThat(retrievedTool.description()).isEqualTo("Calculate simple mathematical expressions");
 
-        // Act - Execute retrieved tool
+        // 执行 - 执行取回的工具
         ToolContext ctx = new ToolContext("sess-1", ".", null, null);
         ToolResult result = retrievedTool.execute(ctx, Map.of("expr", "21*2")).get();
         assertThat(result.isError()).isFalse();

@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.message.AssistantMessage;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Interface for calling LLM (either directly or via stream proxy adapter).
+ * 用于调用 LLM 的接口（可直接调用，也可经由流式代理适配器调用）。
  */
 @FunctionalInterface
 public interface LlmCaller {

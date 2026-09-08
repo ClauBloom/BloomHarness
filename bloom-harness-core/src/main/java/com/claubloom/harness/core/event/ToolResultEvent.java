@@ -5,7 +5,7 @@ import com.claubloom.harness.protocol.tool.ToolResult;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Event fired after a tool execution completes with result.
+ * 在工具执行完成并产生结果后触发的事件。
  */
 public record ToolResultEvent(
         @JsonProperty(value = "type", defaultValue = "tool_result")

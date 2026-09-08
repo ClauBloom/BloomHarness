@@ -15,12 +15,12 @@ import java.util.Map;
 public class McpProperties {
 
     /**
-     * Whether MCP integration is enabled.
+     * 是否启用 MCP 集成。
      */
     private boolean enabled = true;
 
     /**
-     * Map of server name to server configuration.
+     * 服务器名称到服务器配置的映射。
      */
     private Map<String, ServerProperties> servers = new HashMap<>();
 

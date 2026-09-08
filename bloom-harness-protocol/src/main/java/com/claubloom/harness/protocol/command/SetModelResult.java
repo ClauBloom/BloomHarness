@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.session.SessionSnapshot;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Result of set_model command.
+ * set_model 命令的结果。
  */
 public record SetModelResult(
         @JsonProperty(value = "command", defaultValue = "set_model")

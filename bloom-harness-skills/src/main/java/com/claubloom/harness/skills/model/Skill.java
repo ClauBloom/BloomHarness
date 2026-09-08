@@ -4,8 +4,8 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
- * Represents an Agent Skill with metadata and instructions.
- * Directly mirrors pi's Skill interface and Agent Skills standard.
+ * 表示一个包含元数据与指令的 Agent Skill。
+ * 与 pi 的 Skill 接口及 Agent Skills 标准保持一致。
  */
 public record Skill(
         String name,
@@ -13,7 +13,7 @@ public record Skill(
         String filePath,
         String baseDir,
         String content,
-        String scope, // "project" | "user" | "custom"
+        String scope, // 作用域："project" | "user" | "custom"
         boolean disableModelInvocation
 ) {
     public static final int MAX_NAME_LENGTH = 64;

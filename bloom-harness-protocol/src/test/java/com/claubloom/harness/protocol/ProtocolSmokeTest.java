@@ -22,7 +22,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Phase 1 Smoke Test for Protocol Models (TC-P1-01, TC-P1-02).
+ * 针对协议模型的第一阶段冒烟测试(TC-P1-01、TC-P1-02)。
  */
 public class ProtocolSmokeTest {
 
@@ -36,12 +36,12 @@ public class ProtocolSmokeTest {
     }
 
     /**
-     * TC-P1-01: Message union type JSON round-trip serialization and deserialization.
+     * TC-P1-01:消息联合类型的 JSON 往返序列化与反序列化。
      */
     @Test
     @DisplayName("TC-P1-01: Should serialize and deserialize composite AssistantMessage with Text, Thinking, and ToolCall content")
     void should_serializeAndDeserializeAssistantMessage_when_compositeContent() throws Exception {
-        // Arrange
+        // 准备
         var model = ModelRef.of("anthropic", "claude-3-5-sonnet");
         var usage = new Usage(100, 50, 10, 5, 20, 150, new ModelCost(0.003, 0.015, 0.0003, 0.00375, 0.02205));
         List<MessageContent> content = List.of(
@@ -60,11 +60,11 @@ public class ProtocolSmokeTest {
                 "toolUse"
         );
 
-        // Act
+        // 执行
         String json = objectMapper.writeValueAsString(originalMessage);
         AgentMessage deserialized = objectMapper.readValue(json, AgentMessage.class);
 
-        // Assert
+        // 断言
         assertThat(deserialized).isInstanceOf(AssistantMessage.class);
         var assistantMessage = (AssistantMessage) deserialized;
         assertThat(assistantMessage.id()).isEqualTo("msg-12345");
@@ -85,7 +85,7 @@ public class ProtocolSmokeTest {
         assertThat(toolCall.toolCallId()).isEqualTo("call-001");
         assertThat(toolCall.toolName()).isEqualTo("read");
 
-        // Verify Server Envelope Round-trip
+        // 校验服务器信封的往返序列化
         var serverEvent = new ServerEvent.SessionProgressEvent(
                 "sess-01",
                 new TranscriptProgress.AssistantDelta("msg-12345", 0, "text", "Hello delta")
@@ -99,12 +99,12 @@ public class ProtocolSmokeTest {
     }
 
     /**
-     * TC-P1-02: Result pattern matching and monadic chaining.
+     * TC-P1-02:Result 模式匹配与单子(monadic)链式调用。
      */
     @Test
     @DisplayName("TC-P1-02: Should unpack and map Result.Ok and Result.Err correctly without exceptions")
     void should_unpackAndMapResult_when_okOrErr() {
-        // Test Result.Ok
+        // 测试 Result.Ok
         Result<String> okResult = Result.ok("operation-successful");
         assertThat(okResult.isOk()).isTrue();
         assertThat(okResult.isErr()).isFalse();
@@ -114,14 +114,14 @@ public class ProtocolSmokeTest {
         Result<Integer> mappedOk = okResult.map(String::length);
         assertThat(mappedOk.getOrNull()).isEqualTo("operation-successful".length());
 
-        // Pattern matching
+        // 模式匹配
         String okUnpacked = switch (okResult) {
             case Result.Ok<String> ok -> "Received: " + ok.value();
             case Result.Err<String> err -> "Error: " + err.error().message();
         };
         assertThat(okUnpacked).isEqualTo("Received: operation-successful");
 
-        // Test Result.Err
+        // 测试 Result.Err
         Result<String> errResult = Result.err("NOT_FOUND", "File does not exist");
         assertThat(errResult.isOk()).isFalse();
         assertThat(errResult.isErr()).isTrue();

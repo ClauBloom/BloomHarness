@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Reference to a specific AI model provider and model ID.
+ * 对特定 AI 模型供应商与模型 ID 的引用。
  */
 public record ModelRef(
         @JsonProperty(value = "provider", required = true)

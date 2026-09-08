@@ -29,17 +29,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Phase 1 Smoke Test for Core Engine (TC-P1-03, TC-P1-04).
+ * 核心引擎的第 1 阶段冒烟测试（TC-P1-03、TC-P1-04）。
  */
 public class CoreSmokeTest {
 
     /**
-     * TC-P1-03: ToolRegistry dynamic registration and retrieval.
+     * TC-P1-03：ToolRegistry 动态注册与检索。
      */
     @Test
     @DisplayName("TC-P1-03: Should dynamically register, find, and unregister tools in ToolRegistry")
     void should_registerAndFindTool_when_dynamicToolAdded() {
-        // Arrange
+        // 准备
         ToolRegistry registry = new ToolRegistry();
         ToolDefinition addTool = new ToolDefinition() {
             @Override
@@ -72,10 +72,10 @@ public class CoreSmokeTest {
             }
         };
 
-        // Act
+        // 执行
         registry.register(addTool);
 
-        // Assert
+        // 断言
         assertThat(registry.contains("add")).isTrue();
         assertThat(registry.size()).isEqualTo(1);
         Optional<ToolDefinition> found = registry.find("add");
@@ -84,7 +84,7 @@ public class CoreSmokeTest {
         assertThat(found.get().description()).isEqualTo("Calculates the sum of two integers");
         assertThat(found.get().parameterSchema()).containsEntry("type", "object");
 
-        // Act - Unregister
+        // 执行 - 注销
         Optional<ToolDefinition> unregistered = registry.unregister("add");
         assertThat(unregistered).isPresent();
         assertThat(registry.contains("add")).isFalse();
@@ -92,12 +92,12 @@ public class CoreSmokeTest {
     }
 
     /**
-     * TC-P1-04: Agent Loop Virtual Thread state machine with Mock AI.
+     * TC-P1-04：使用 Mock AI 的智能体循环虚拟线程状态机。
      */
     @Test
     @DisplayName("TC-P1-04: Agent Loop should complete turn loop: Idle -> Turn 1 (ToolCall) -> Turn 2 (Answer) -> Idle")
     void should_executeAgentLoopWithToolCall_when_mockLlmProvided() throws Exception {
-        // Arrange
+        // 准备
         ToolRegistry registry = new ToolRegistry();
         registry.register(new ToolDefinition() {
             @Override
@@ -129,11 +129,11 @@ public class CoreSmokeTest {
         ModelRef testModel = ModelRef.of("mock-provider", "mock-model");
         AtomicInteger callCount = new AtomicInteger(0);
 
-        // Mock LLM Caller: 1st turn returns ToolCall 'add', 2nd turn returns text answer
+        // 模拟 LLM 调用器：第 1 轮返回 ToolCall 'add'，第 2 轮返回文本回答
         LlmCaller mockLlmCaller = (context, config, eventSink) -> {
             int round = callCount.incrementAndGet();
             if (round == 1) {
-                // Round 1: Assistant requests tool call
+                // 第 1 轮：助手请求工具调用
                 var toolCallContent = new ToolCallContent("call-1", "add", Map.of("a", 10, "b", 20));
                 var msg = AssistantMessage.complete(
                         "msg-round-1",
@@ -146,7 +146,7 @@ public class CoreSmokeTest {
                 );
                 return CompletableFuture.completedFuture(msg);
             } else {
-                // Round 2: Assistant returns final text response after seeing tool result
+                // 第 2 轮：助手在看到工具结果后返回最终文本响应
                 var textContent = new TextContent("The sum of 10 and 20 is 30.");
                 var msg = AssistantMessage.complete(
                         "msg-round-2",
@@ -172,7 +172,7 @@ public class CoreSmokeTest {
 
         UserMessage prompt = new UserMessage("prompt-1", List.of(new TextContent("Calculate 10 + 20")), System.currentTimeMillis());
 
-        // Act
+        // 执行
         List<AgentMessage> newMessages = agentLoop.runAgentLoop(
                 List.of(prompt),
                 context,
@@ -181,12 +181,12 @@ public class CoreSmokeTest {
                 mockLlmCaller
         ).get();
 
-        // Assert
+        // 断言
         assertThat(newMessages).isNotEmpty();
-        // Prompts (1) + Assistant msg 1 (1) + Tool Result (1) + Assistant msg 2 (1) = 4 messages
+        // 提示词 (1) + 助手消息 1 (1) + 工具结果 (1) + 助手消息 2 (1) = 4 条消息
         assertThat(newMessages).hasSize(4);
 
-        // Verify Event Stream Order
+        // 校验事件流顺序
         List<String> eventTypes = capturedEvents.stream().map(AgentEvent::type).toList();
         assertThat(eventTypes).contains(
                 "agent_start",
@@ -199,7 +199,7 @@ public class CoreSmokeTest {
                 "agent_end"
         );
 
-        // Verify that tool result exists in context and equals "Result is 30"
+        // 验证上下文中存在工具结果，且其内容等于 "Result is 30"
         var toolResultMsg = newMessages.stream()
                 .filter(m -> "tool".equals(m.role()))
                 .findFirst();

@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Built-in Grep tool for recursive regex / literal content search.
+ * 内置 Grep 工具，用于递归的正则 / 字面量内容搜索。
  * 严格对齐 pi-agent 的 grep.ts 实现规范。
  */
 @Slf4j
@@ -127,7 +127,7 @@ public class GrepTool implements ToolDefinition {
                                 return FileVisitResult.CONTINUE;
                             }
 
-                            // Skip binary or huge files (>10MB)
+                            // 跳过二进制或超大文件（>10MB）
                             if (attrs.size() > 10 * 1024 * 1024) {
                                 return FileVisitResult.CONTINUE;
                             }
@@ -181,7 +181,7 @@ public class GrepTool implements ToolDefinition {
                         fileHeaderAdded = true;
                     }
 
-                    // Truncate long lines to OutputTruncator.GREP_MAX_LINE_LENGTH
+                    // 将超长行截断为 OutputTruncator.GREP_MAX_LINE_LENGTH
                     String displayLine = line;
                     if (displayLine.length() > OutputTruncator.GREP_MAX_LINE_LENGTH) {
                         displayLine = displayLine.substring(0, OutputTruncator.GREP_MAX_LINE_LENGTH) + "...";
@@ -196,7 +196,7 @@ public class GrepTool implements ToolDefinition {
                 }
             }
         } catch (Exception ignored) {
-            // Ignore unreadable binary or permission error files
+            // 忽略无法读取的二进制或权限错误的文件
         }
     }
 }

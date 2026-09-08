@@ -1,8 +1,8 @@
 package com.claubloom.harness.server.connection;
 
 /**
- * Handler callbacks for an accepted connection.
- * Mirrors pi's ByteConnectionHandler in packages/server/src/connection.ts.
+ * 已接受连接的回调处理器。
+ * 对齐 pi 在 packages/server/src/connection.ts 中的 ByteConnectionHandler。
  */
 public interface ByteConnectionHandler {
 

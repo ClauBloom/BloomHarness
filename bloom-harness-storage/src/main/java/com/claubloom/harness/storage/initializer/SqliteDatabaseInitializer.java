@@ -9,7 +9,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 
 /**
- * Executes SQLite table migrations on startup, directly matching pi's 001_initial.sql.
+ * 启动时执行 SQLite 表结构迁移,与 pi 的 001_initial.sql 完全对应。
  */
 @Slf4j
 @Component
@@ -22,7 +22,7 @@ public class SqliteDatabaseInitializer {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // 1. Create sessions table
+            // 1. 创建 sessions 表
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS sessions (
                     id TEXT PRIMARY KEY,
@@ -33,7 +33,7 @@ public class SqliteDatabaseInitializer {
                 )
             """);
 
-            // 2. Create entries table
+            // 2. 创建 entries 表
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS entries (
                     session_id TEXT NOT NULL,
@@ -48,7 +48,7 @@ public class SqliteDatabaseInitializer {
                 )
             """);
 
-            // 3. Create session_stats table
+            // 3. 创建 session_stats 表
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS session_stats (
                     session_id TEXT PRIMARY KEY,

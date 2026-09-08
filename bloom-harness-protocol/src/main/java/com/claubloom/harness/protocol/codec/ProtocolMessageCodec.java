@@ -6,10 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 
 /**
- * Validates and encodes/decodes protocol messages as length-prefixed CBOR payloads.
- * Faithful port of pi protocol/src/codec.ts (encodeClientMessage, encodeServerMessage,
- * ClientMessageDecoder, decodeServerMessage) using Jackson's CBOR backend so the
- * wire format matches pi's framed CBOR transport.
+ * 将协议消息作为带长度前缀的 CBOR 负载进行校验与编解码。
+ * 忠实移植自 pi 的 protocol/src/codec.ts(encodeClientMessage、encodeServerMessage、
+ * ClientMessageDecoder、decodeServerMessage),使用 Jackson 的 CBOR 后端,
+ * 使线上格式与 pi 的帧化 CBOR 传输保持一致。
  */
 public final class ProtocolMessageCodec {
 
@@ -18,17 +18,17 @@ public final class ProtocolMessageCodec {
     private ProtocolMessageCodec() {
     }
 
-    /** Object mapper shared for CBOR codec round-trips (exposed for testing only). */
+    /** CBOR 编解码往返共用的 ObjectMapper(仅为测试暴露)。 */
     public static ObjectMapper cborMapper() {
         return CBOR;
     }
 
-    /** Validates and encodes one complete length-prefixed client message. */
+    /** 校验并编码一条完整的带长度前缀的客户端消息。 */
     public static byte[] encodeClientMessage(ClientMessage message, Integer maxFrameLength) {
         return encodeProtocolMessage(message, ClientMessage.class, "client", maxFrameLength);
     }
 
-    /** Validates and encodes one complete length-prefixed server message. */
+    /** 校验并编码一条完整的带长度前缀的服务器消息。 */
     public static byte[] encodeServerMessage(ServerMessage message, Integer maxFrameLength) {
         return encodeProtocolMessage(message, ServerMessage.class, "server", maxFrameLength);
     }

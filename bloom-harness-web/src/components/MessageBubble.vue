@@ -21,12 +21,12 @@ function parseTextContent(raw: string) {
 
 <template>
   <div class="flex gap-3 my-4 group" :class="{ 'justify-end': message.role === 'user' }">
-    <!-- Avatar -->
+    <!-- 头像 -->
     <div v-if="message.role !== 'user'" class="w-8 h-8 rounded-full bg-purple-900/60 border border-purple-500/30 flex items-center justify-center shrink-0">
       <Bot class="w-4 h-4 text-purple-300" />
     </div>
 
-    <!-- Content Card -->
+    <!-- 内容卡片 -->
     <div 
       class="max-w-[85%] rounded-2xl px-4 py-3 shadow-md transition"
       :class="[
@@ -37,15 +37,15 @@ function parseTextContent(raw: string) {
             : 'bg-gray-900 border border-gray-800 text-gray-200 rounded-bl-sm'
       ]"
     >
-      <!-- Error Status Indicator Header -->
+      <!-- 错误状态提示头部 -->
       <div v-if="(message as AssistantMessage).status === 'error'" class="flex items-center gap-1.5 text-xs font-semibold text-rose-400 mb-2 pb-1.5 border-b border-rose-800/40">
         <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
         <span>服务调用异常</span>
       </div>
 
-      <!-- Message Content Loop -->
+      <!-- 消息内容循环 -->
       <div v-for="(item, idx) in message.content" :key="idx">
-        <!-- Text (含可能内嵌的 <think> 思考块双重兼容提取) -->
+        <!-- 文本(含可能内嵌的 <think> 思考块双重兼容提取) -->
         <template v-if="item.type === 'text'">
           <div v-if="parseTextContent(item.text).thinking" class="my-2 p-2.5 rounded-lg bg-gray-950/70 border border-purple-900/40 text-xs text-purple-300 font-mono">
             <div class="flex items-center gap-1.5 font-semibold text-purple-400 mb-1">
@@ -57,7 +57,7 @@ function parseTextContent(raw: string) {
           <MarkdownRenderer v-if="parseTextContent(item.text).text" :content="parseTextContent(item.text).text" />
         </template>
 
-        <!-- Thinking / Reasoning -->
+        <!-- 思考/推理 -->
         <div v-else-if="item.type === 'thinking'" class="my-2 p-2.5 rounded-lg bg-gray-950/70 border border-purple-900/40 text-xs text-purple-300 font-mono">
           <div class="flex items-center gap-1.5 font-semibold text-purple-400 mb-1">
             <Brain class="w-3.5 h-3.5 animate-pulse" />
@@ -66,15 +66,15 @@ function parseTextContent(raw: string) {
           <div class="whitespace-pre-wrap leading-relaxed opacity-90">{{ item.thinking }}</div>
         </div>
 
-        <!-- Tool Call -->
+        <!-- 工具调用 -->
         <ToolExecution v-else-if="item.type === 'toolCall'" :toolCall="(item as ToolCallContent)" />
       </div>
 
-      <!-- Tool Result Message -->
+      <!-- 工具结果消息 -->
       <ToolExecution v-if="message.role === 'tool'" :toolResult="(message as ToolResultMessage)" />
     </div>
 
-    <!-- User Avatar -->
+    <!-- 用户头像 -->
     <div v-if="message.role === 'user'" class="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center shrink-0">
       <User class="w-4 h-4 text-gray-300" />
     </div>

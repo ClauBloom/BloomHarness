@@ -14,7 +14,7 @@ import java.util.List;
 public class ExtensionProperties {
 
     /**
-     * Whether extension system is enabled.
+     * 扩展系统是否启用。
      */
     private boolean enabled = true;
 

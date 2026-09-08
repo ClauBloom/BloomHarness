@@ -76,7 +76,7 @@ public class AgentLoop {
     }
 
     /**
-     * Synchronous virtual-thread loop logic.
+     * 同步虚拟线程循环逻辑。
      */
     private void runLoopSync(
             AgentContext currentContext,
@@ -97,7 +97,7 @@ public class AgentLoop {
         while ((hasMoreToolCalls || !pendingMessages.isEmpty()) && turnCount < maxTurns) {
             turnCount++;
 
-            // Inject pending steering messages
+            // 注入待处理的中途干预消息
             if (!pendingMessages.isEmpty()) {
                 for (AgentMessage msg : pendingMessages) {
                     emit.emit(new MessageStartEvent(msg));
@@ -108,7 +108,7 @@ public class AgentLoop {
                 pendingMessages.clear();
             }
 
-            // Call LLM for the assistant turn
+            // 为助手轮次调用 LLM
             AssistantMessage assistantMessage = llmCaller.call(currentContext, config, emit).join();
             emit.emit(new MessageStartEvent(assistantMessage));
             emit.emit(new MessageEndEvent(assistantMessage));
@@ -121,7 +121,7 @@ public class AgentLoop {
                 return;
             }
 
-            // Extract tool calls from assistant message
+            // 从助手消息中提取工具调用
             List<ToolCall> toolCalls = new ArrayList<>();
             if (assistantMessage.content() != null) {
                 for (var content : assistantMessage.content()) {
@@ -159,7 +159,7 @@ public class AgentLoop {
 
             emit.emit(new TurnEndEvent(assistantMessage, toolResults));
 
-            // Check if user provided steering messages while tools were executing
+            // 检查工具执行期间用户是否提供了中途干预消息
             if (config.getGetSteeringMessages() != null) {
                 List<AgentMessage> steer = config.getGetSteeringMessages().get();
                 if (steer != null && !steer.isEmpty()) {
@@ -167,7 +167,7 @@ public class AgentLoop {
                 }
             }
 
-            // Prepare next turn (compaction check or model switch)
+            // 准备下一轮次（压缩检查或模型切换）
             if (hasMoreToolCalls || !pendingMessages.isEmpty()) {
                 if (config.getPrepareNextTurn() != null) {
                     var snapshot = config.getPrepareNextTurn().apply(currentContext);

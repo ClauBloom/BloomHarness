@@ -75,8 +75,8 @@ public class ConfigController {
     }
 
     /**
-     * Add or update an AI provider configuration.
-     * Integrates with ai-router-core's ApiKeyConfig domain model.
+     * 添加或更新 AI 供应商配置。
+     * 与 ai-router-core 的 ApiKeyConfig 领域模型集成。
      */
     @PostMapping("/providers")
     public ResponseEntity<Map<String, Object>> saveProvider(@RequestBody Map<String, Object> body) {
@@ -140,7 +140,7 @@ public class ConfigController {
         String baseUrl = (String) body.get("baseUrl");
         String apiKey = (String) body.get("apiKey");
 
-        // If apiKey is masked, look up existing
+        // 若 apiKey 已被掩码，则查找现有的配置
         if (apiKey != null && apiKey.contains("••••") && providerId != null) {
             Optional<ProviderConfig> existing = providerRegistry.find(providerId);
             if (existing.isPresent()) {
@@ -163,7 +163,7 @@ public class ConfigController {
                 target = target.substring(0, target.length() - 1);
             }
 
-            // Probe target: try /models first (OpenAI/Ollama format), or target directly
+            // 探测目标：先尝试 /models（OpenAI/Ollama 格式），否则直接探测目标地址
             String probeUrl = target.endsWith("/v1") ? target + "/models" : target;
             HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(probeUrl))
@@ -193,7 +193,7 @@ public class ConfigController {
                         "message", "鉴权失败 (" + code + "): 请检查 API Key 是否正确"
                 ));
             } else if (code == 404) {
-                // Some providers don't have /models, but the host is reachable
+                // 部分供应商没有 /models，但主机可达
                 return ResponseEntity.ok(Map.of(
                         "ok", true,
                         "latencyMs", latency,
@@ -228,7 +228,7 @@ public class ConfigController {
         String baseUrl = (String) body.get("baseUrl");
         String apiKey = (String) body.get("apiKey");
 
-        // Retain existing key if masked
+        // 若已掩码则保留现有密钥
         if (apiKey != null && apiKey.contains("••••") && providerId != null) {
             Optional<ProviderConfig> existing = providerRegistry.find(providerId);
             if (existing.isPresent()) {
@@ -252,7 +252,7 @@ public class ConfigController {
                 target = target.substring(0, target.length() - "/chat/completions".length());
             }
 
-            // Determine candidate endpoints: /models or /v1/models or /api/tags
+            // 确定候选端点：/models 或 /v1/models 或 /api/tags
             List<String> candidateUrls = new ArrayList<>();
             if (target.endsWith("/v1")) {
                 candidateUrls.add(target + "/models");
@@ -299,7 +299,7 @@ public class ConfigController {
             }
 
             if (!modelList.isEmpty()) {
-                // Sort models alphabetically
+                // 按字母顺序对模型排序
                 Collections.sort(modelList);
                 return ResponseEntity.ok(Map.of(
                         "ok", true,
@@ -330,7 +330,7 @@ public class ConfigController {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(jsonBody);
 
-            // 1. OpenAI / DeepSeek format: {"data": [{"id": "deepseek-chat"}, ...]}
+            // 1. OpenAI / DeepSeek 格式：{"data": [{"id": "deepseek-chat"}, ...]}
             if (root.has("data") && root.get("data").isArray()) {
                 for (com.fasterxml.jackson.databind.JsonNode item : root.get("data")) {
                     if (item.has("id")) {
@@ -339,7 +339,7 @@ public class ConfigController {
                 }
             }
 
-            // 2. Ollama format: {"models": [{"name": "qwen2.5:latest"}, ...]}
+            // 2. Ollama 格式：{"models": [{"name": "qwen2.5:latest"}, ...]}
             if (root.has("models") && root.get("models").isArray()) {
                 for (com.fasterxml.jackson.databind.JsonNode item : root.get("models")) {
                     if (item.has("name")) {
@@ -350,7 +350,7 @@ public class ConfigController {
                 }
             }
 
-            // 3. Fallback: root array
+            // 3. 兜底方案：根数组
             if (root.isArray()) {
                 for (com.fasterxml.jackson.databind.JsonNode item : root) {
                     if (item.has("id")) {

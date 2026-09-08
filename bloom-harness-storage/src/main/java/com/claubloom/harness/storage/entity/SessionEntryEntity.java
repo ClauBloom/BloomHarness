@@ -8,8 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Entity mapped to SQLite 'entries' table.
- * Directly mirrors pi's 001_initial.sql entries schema.
+ * 映射到 SQLite 'entries' 表的实体。
+ * 与 pi 的 001_initial.sql entries 表结构直接对应。
  */
 @Data
 @Builder
@@ -31,5 +31,5 @@ public class SessionEntryEntity {
 
     private Long timestamp;
 
-    private String payload; // JSON serialized message
+    private String payload; // JSON 序列化后的消息
 }

@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Bridges an MCP remote tool into BloomHarness Core's ToolDefinition interface.
+ * 将 MCP 远程工具桥接为 BloomHarness Core 的 ToolDefinition 接口。
  */
 @RequiredArgsConstructor
 public class McpToolBridge implements ToolDefinition {

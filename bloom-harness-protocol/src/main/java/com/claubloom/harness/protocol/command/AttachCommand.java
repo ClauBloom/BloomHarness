@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.command;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Attach client to an existing session.
+ * 将客户端附加到现有会话。
  */
 public record AttachCommand(
         @JsonProperty(value = "command", defaultValue = "attach")

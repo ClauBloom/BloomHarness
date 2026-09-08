@@ -39,12 +39,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Smoke test verifying the full ReAct Autonomous Loop:
- * 1. LLM request carries OpenAI 'tools' schema.
- * 2. LLM responds with a tool call to 'write'.
- * 3. ToolExecutor executes the write tool inside /home/clau/codes/test/.
- * 4. HelloWorld.cpp is successfully created on disk.
- * 5. Tool result is fed back into Agent context, LLM produces final answer.
+ * 验证完整 ReAct 自主循环的冒烟测试:
+ * 1. LLM 请求携带 OpenAI 'tools' 结构。
+ * 2. LLM 以对 'write' 的工具调用作为响应。
+ * 3. ToolExecutor 在 /home/clau/codes/test/ 内执行 write 工具。
+ * 4. HelloWorld.cpp 成功创建于磁盘上。
+ * 5. 工具结果回填到 Agent 上下文,LLM 产出最终回答。
  */
 @SpringBootTest(classes = BloomHarnessApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class ReActSmokeTest {
@@ -73,7 +73,7 @@ public class ReActSmokeTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Ensure test directory exists and clear previous HelloWorld.cpp
+        // 确保测试目录存在,并清理之前的 HelloWorld.cpp
         File testDir = new File(TEST_DIR);
         if (!testDir.exists()) {
             testDir.mkdirs();
@@ -144,13 +144,13 @@ public class ReActSmokeTest {
             public MockResponse dispatch(RecordedRequest request) {
                 int turn = callCount.incrementAndGet();
 
-                // Verify request sent to LLM contains 'tools' and 'messages'
+                // 验证发送给 LLM 的请求中包含 'tools' 与 'messages'
                 String requestBody = request.getBody().readUtf8();
                 assertThat(requestBody).contains("\"tools\"");
                 assertThat(requestBody).contains("\"name\":\"write\"");
 
                 if (turn == 1) {
-                    // Turn 1: Model issues tool call to write HelloWorld.cpp
+                    // 第 1 轮:模型发起 write 工具调用以写入 HelloWorld.cpp
                     String args = "{\"path\":\"HelloWorld.cpp\",\"content\":" + jsonQuote(cppSource) + "}";
                     return sseResponse(
                             toolCallChunk("call-write-001", "write", args)
@@ -158,7 +158,7 @@ public class ReActSmokeTest {
                             + "data: [DONE]\n\n"
                     );
                 } else {
-                    // Turn 2: Model sees tool result and confirms completion
+                    // 第 2 轮:模型看到工具结果并确认完成
                     return sseResponse(
                             contentChunk("我已经成功为您在 /home/clau/codes/test/ 目录下写入了 HelloWorld.cpp！")
                             + finalChunk("stop")
@@ -168,7 +168,7 @@ public class ReActSmokeTest {
             }
         });
 
-        // 1. Create session with CWD = /home/clau/codes/test/
+        // 1. 以 CWD = /home/clau/codes/test/ 创建会话
         String sessionId = "react-smoke-" + System.currentTimeMillis();
         PiSessionRuntime runtime = service.createSession(CreateSessionOptions.builder()
                 .id(sessionId)
@@ -178,17 +178,17 @@ public class ReActSmokeTest {
                 .thinkingLevel(ThinkingLevel.OFF)
                 .build()).join();
 
-        // 2. Trigger prompt to start ReAct loop
+        // 2. 触发提示词以启动 ReAct 循环
         runtime.prompt("请在当前目录下写入一个 HelloWorld.cpp 文件");
 
-        // 3. Print transcript to diagnose tool execution
+        // 3. 打印对话记录,以便诊断工具执行过程
         List<AgentMessage> transcript = storage.getTranscript(sessionId);
         System.out.println("=== Transcript Size: " + transcript.size() + " ===");
         for (int i = 0; i < transcript.size(); i++) {
             System.out.println("Message [" + i + "]: " + transcript.get(i));
         }
 
-        // 4. Verify file HelloWorld.cpp actually exists on disk!
+        // 4. 验证 HelloWorld.cpp 确实存在于磁盘上!
         Path targetFile = Paths.get(TEST_DIR, "HelloWorld.cpp");
         assertThat(Files.exists(targetFile))
                 .as("HelloWorld.cpp should be created on disk by ToolExecutor in %s, tool result was: %s",
@@ -196,7 +196,7 @@ public class ReActSmokeTest {
                 .isTrue();
         assertThat(transcript).hasSize(4);
 
-        // Turn 1 Tool Call
+        // 第 1 轮工具调用
         AssistantMessage callMsg = (AssistantMessage) transcript.get(1);
         ToolCallContent toolCall = (ToolCallContent) callMsg.content().stream()
                 .filter(c -> c instanceof ToolCallContent)
@@ -204,17 +204,17 @@ public class ReActSmokeTest {
                 .orElseThrow();
         assertThat(toolCall.toolName()).isEqualTo("write");
 
-        // Tool Result
+        // 工具结果
         ToolResultMessage resultMsg = (ToolResultMessage) transcript.get(2);
         assertThat(resultMsg.toolCallId()).isEqualTo("call-write-001");
         assertThat(resultMsg.isError()).isFalse();
         assertThat(((TextContent) resultMsg.content().get(0)).text()).contains("Successfully wrote");
 
-        // Turn 2 Final message
+        // 第 2 轮最终消息
         AssistantMessage finalMsg = (AssistantMessage) transcript.get(3);
         assertThat(((TextContent) finalMsg.content().get(0)).text()).contains("HelloWorld.cpp");
 
-        // 5. Verify runtime phase returned to IDLE
+        // 5. 验证运行时阶段已回到 IDLE
         assertThat(runtime.getPhase()).isEqualTo(SessionPhase.IDLE);
         assertThat(callCount.get()).isEqualTo(2);
 

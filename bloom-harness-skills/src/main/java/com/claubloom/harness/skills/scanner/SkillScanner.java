@@ -13,8 +13,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 /**
- * Scans directories for Agent Skills (SKILL.md and *.md) and resolves collisions by scope.
- * Directly mirrors pi's skills.ts loadSkills and loadSkillsFromDir.
+ * 扫描目录以发现 Agent Skills（SKILL.md 与 *.md），并按作用域解决命名冲突。
+ * 与 pi 的 skills.ts 中 loadSkills 与 loadSkillsFromDir 实现保持一致。
  */
 @Slf4j
 @Component
@@ -25,23 +25,23 @@ public class SkillScanner {
     private static final Set<String> IGNORED_DIRS = Set.of(".git", "node_modules", "target", ".m2-repo", ".idea", ".vscode");
 
     /**
-     * Scan multiple directories with precedence:
-     * project skills override user/global skills with the same name.
+     * 按优先级扫描多个目录：
+     * 同名时项目技能覆盖用户/全局技能。
      *
-     * @param projectDir workspace skills directory
-     * @param userDir global user skills directory
-     * @param extraDirs additional custom directories
-     * @return map of skill name to Skill
+     * @param projectDir 工作区技能目录
+     * @param userDir 全局用户技能目录
+     * @param extraDirs 额外的自定义目录
+     * @return 技能名称到 Skill 的映射
      */
     public Map<String, Skill> scan(Path projectDir, Path userDir, List<Path> extraDirs) {
         Map<String, Skill> skillMap = new LinkedHashMap<>();
 
-        // 1. Load user/global skills first (lowest precedence)
+        // 1. 先加载用户/全局技能（优先级最低）
         if (userDir != null && Files.exists(userDir)) {
             loadFromDirectory(userDir, "user", skillMap);
         }
 
-        // 2. Load extra custom skills (medium precedence)
+        // 2. 再加载额外自定义技能（优先级中等）
         if (extraDirs != null) {
             for (Path dir : extraDirs) {
                 if (dir != null && Files.exists(dir)) {
@@ -50,7 +50,7 @@ public class SkillScanner {
             }
         }
 
-        // 3. Load project skills (highest precedence - overrides user and custom)
+        // 3. 最后加载项目技能（优先级最高——覆盖用户与自定义技能）
         if (projectDir != null && Files.exists(projectDir)) {
             loadFromDirectory(projectDir, "project", skillMap);
         }
@@ -68,7 +68,7 @@ public class SkillScanner {
                         return FileVisitResult.SKIP_SUBTREE;
                     }
 
-                    // If this directory contains a SKILL.md, load it and skip deeper subtrees (mirrors pi's rule)
+                    // 若该目录包含 SKILL.md，则加载它并跳过更深的子树（对应 pi 的规则）
                     Path skillMd = dir.resolve("SKILL.md");
                     if (Files.exists(skillMd) && Files.isRegularFile(skillMd)) {
                         tryLoadSkill(skillMd, scope, targetMap);
@@ -101,7 +101,7 @@ public class SkillScanner {
         try {
             String content = Files.readString(file, StandardCharsets.UTF_8);
             Skill skill = parser.parse(content, file, scope);
-            // Higher precedence replaces existing entry
+            // 优先级更高的技能替换已有条目
             targetMap.put(skill.name(), skill);
             log.debug("Loaded skill '{}' from {} (scope={})", skill.name(), file, scope);
         } catch (Exception e) {

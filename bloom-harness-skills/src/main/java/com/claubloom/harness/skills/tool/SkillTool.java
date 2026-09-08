@@ -15,8 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Built-in Skill tool allowing the Agent to dynamically load instructions for a skill by name.
- * Directly mirrors pi's skill invocation mechanics.
+ * 内置的 Skill 工具，允许智能体按名称动态加载某个技能的指令。
+ * 与 pi 的技能调用机制保持一致。
  */
 @Slf4j
 @Component

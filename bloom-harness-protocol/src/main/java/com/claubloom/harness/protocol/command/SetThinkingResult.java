@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.session.SessionSnapshot;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Result of set_thinking command.
+ * set_thinking 命令的结果。
  */
 public record SetThinkingResult(
         @JsonProperty(value = "command", defaultValue = "set_thinking")

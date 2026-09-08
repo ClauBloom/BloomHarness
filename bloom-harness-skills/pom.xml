@@ -24,13 +24,13 @@
             <artifactId>bloom-harness-core</artifactId>
         </dependency>
 
-        <!-- Spring AI Core for Resource, PromptTemplate, and Advisor abstraction -->
+        <!-- Spring AI Core：提供 Resource、PromptTemplate 与 Advisor 抽象 -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-core</artifactId>
         </dependency>
 
-        <!-- SnakeYAML for frontmatter parsing -->
+        <!-- SnakeYAML：用于元信息头解析 -->
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
@@ -42,7 +42,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Test dependencies -->
+        <!-- 测试依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

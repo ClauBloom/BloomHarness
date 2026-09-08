@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Create a new session.
+ * 创建新会话。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record CreateCommand(

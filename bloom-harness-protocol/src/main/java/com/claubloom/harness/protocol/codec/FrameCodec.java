@@ -1,8 +1,8 @@
 package com.claubloom.harness.protocol.codec;
 
 /**
- * Static frame helpers for the length-prefixed wire format.
- * Faithful port of pi protocol/src/framing.ts constants and encodeFrame/assertCompleteFrame.
+ * 带长度前缀的线上格式的静态帧辅助工具。
+ * 忠实移植自 pi 的 protocol/src/framing.ts 常量以及 encodeFrame/assertCompleteFrame。
  */
 public final class FrameCodec {
 
@@ -16,7 +16,7 @@ public final class FrameCodec {
     private FrameCodec() {
     }
 
-    /** Resolves and validates the effective frame length limit. */
+    /** 解析并校验生效的帧长度上限。 */
     public static int resolveMaxFrameLength(Integer maxFrameLength) {
         int value = maxFrameLength != null ? maxFrameLength : DEFAULT_MAX_FRAME_LENGTH;
         if (value < 0 || value > MAX_UINT32) {
@@ -26,7 +26,7 @@ public final class FrameCodec {
         return value;
     }
 
-    /** Prefixes a payload with its unsigned 32-bit big-endian byte length. */
+    /** 为负载加上其无符号 32 位大端字节长度前缀。 */
     public static byte[] encodeFrame(byte[] payload) {
         if (payload == null) throw new IllegalArgumentException("Frame payload must not be null");
         if (payload.length > MAX_UINT32) {
@@ -42,7 +42,7 @@ public final class FrameCodec {
         return frame;
     }
 
-    /** Validates that bytes contain exactly one complete frame within the configured limit. */
+    /** 校验字节恰好包含一个完整帧且长度在配置上限之内。 */
     public static void assertCompleteFrame(byte[] frame, Integer maxFrameLength) {
         if (frame == null) throw new FrameError("Frame must not be null");
         if (frame.length < FRAME_HEADER_LENGTH) {

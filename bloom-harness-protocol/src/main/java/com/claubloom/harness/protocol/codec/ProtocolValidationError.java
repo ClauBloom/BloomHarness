@@ -1,8 +1,8 @@
 package com.claubloom.harness.protocol.codec;
 
 /**
- * Thrown when a decoded value is not a valid protocol message.
- * Mirrors pi's ProtocolValidationError in protocol/src/codec.ts.
+ * 当解码出的值不是有效的协议消息时抛出。
+ * 镜像 pi 的 protocol/src/codec.ts 中的 ProtocolValidationError。
  */
 public class ProtocolValidationError extends RuntimeException {
 

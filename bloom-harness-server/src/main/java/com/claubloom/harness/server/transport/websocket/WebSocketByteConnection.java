@@ -7,9 +7,9 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 /**
- * Adapts a Spring WebSocketSession to the server's ByteConnection abstraction,
- * sending each frame payload as one binary WebSocket message.
- * Mirrors pi's transport ByteConnection implementations (e.g. transports/unix).
+ * 将 Spring 的 WebSocketSession 适配为服务器的 ByteConnection 抽象，
+ * 将每个帧的负载作为一条二进制 WebSocket 消息发送。
+ * 对齐 pi 的传输层 ByteConnection 实现（如 transports/unix）。
  */
 public class WebSocketByteConnection implements ByteConnection {
 
@@ -50,7 +50,7 @@ public class WebSocketByteConnection implements ByteConnection {
                 session.sendMessage(new TextMessage(text));
             }
         } catch (Exception ignored) {
-            // Delivery failure is handled by onClose.
+            // 投递失败由 onClose 处理。
         }
     }
 
@@ -59,7 +59,7 @@ public class WebSocketByteConnection implements ByteConnection {
         try {
             session.close();
         } catch (Exception ignored) {
-            // Closing twice is safe.
+            // 重复关闭是安全的。
         }
         return CompletableFuture.completedFuture(null);
     }

@@ -32,14 +32,14 @@ public class SystemPromptBuilder {
     ) {
         StringBuilder sb = new StringBuilder();
 
-        // 1. Base identity & instruction
+        // 1. 基础身份与指令
         if (customPrompt != null && !customPrompt.isBlank()) {
             sb.append(customPrompt.trim()).append("\n\n");
         } else {
             sb.append(DEFAULT_BASE_PROMPT.trim()).append("\n\n");
         }
 
-        // 2. Working environment information
+        // 2. 工作环境信息
         sb.append("## Environment\n");
         sb.append("- Current Date: ").append(LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)).append("\n");
         if (cwd != null && !cwd.isBlank()) {
@@ -47,7 +47,7 @@ public class SystemPromptBuilder {
         }
         sb.append("- OS: ").append(System.getProperty("os.name")).append("\n\n");
 
-        // 3. Available Tools section
+        // 3. 可用工具部分
         if (tools != null && !tools.isEmpty()) {
             sb.append("## Available Tools\n");
             for (ToolDefinition tool : tools) {
@@ -56,7 +56,7 @@ public class SystemPromptBuilder {
             sb.append("\n");
         }
 
-        // 4. Injected Skills XML section
+        // 4. 注入的技能 XML 部分
         if (skillsXml != null && !skillsXml.isBlank()) {
             sb.append(skillsXml.trim()).append("\n\n");
         }

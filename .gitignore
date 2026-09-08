@@ -1,9 +1,9 @@
 # ====================================================================
-# BloomHarness Git Ignore Rules
+# BloomHarness Git 忽略规则
 # ====================================================================
 
 # --------------------------------------------------------------------
-# 1. Java / Maven Build Artifacts
+# 1. Java / Maven 构建产物
 # --------------------------------------------------------------------
 target/
 **/target/
@@ -16,7 +16,7 @@ target/
 *.rar
 *.nar
 
-# Maven Release & Dependency Artifacts
+# Maven 发布与依赖产物
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
@@ -28,9 +28,9 @@ buildNumber.properties
 .flattened-pom.xml
 
 # --------------------------------------------------------------------
-# 2. Local Runtime Database & Storage State
+# 2. 本地运行时数据库与存储状态
 # --------------------------------------------------------------------
-# SQLite databases and write-ahead logs
+# SQLite 数据库与预写日志
 *.db
 *.db-shm
 *.db-wal
@@ -38,7 +38,7 @@ bloom-harness.db*
 sessions.db*
 
 # --------------------------------------------------------------------
-# 3. Provider Credentials & Secrets
+# 3. 模型供应商凭据与密钥
 # --------------------------------------------------------------------
 bloom-providers.json
 providers.json
@@ -50,13 +50,13 @@ providers.json
 *.pem
 
 # --------------------------------------------------------------------
-# 4. Local Maven Cache & Repositories
+# 4. 本地 Maven 缓存与仓库
 # --------------------------------------------------------------------
 .m2-repo/
 .m2/
 
 # --------------------------------------------------------------------
-# 5. Frontend (bloom-harness-web) Build & Dependencies
+# 5. 前端 (bloom-harness-web) 构建与依赖
 # --------------------------------------------------------------------
 **/node_modules/
 bloom-harness-web/dist/
@@ -66,7 +66,7 @@ bloom-harness-web/.stylelintcache
 *.local
 
 # --------------------------------------------------------------------
-# 6. IDEs, Editors & OS System Files
+# 6. IDE、编辑器与操作系统系统文件
 # --------------------------------------------------------------------
 # IntelliJ IDEA
 .idea/
@@ -99,7 +99,7 @@ ehthumbs.db
 [Dd]esktop.ini
 
 # --------------------------------------------------------------------
-# 7. Logs, Crash Dumps & Temporary Files
+# 7. 日志、崩溃转储与临时文件
 # --------------------------------------------------------------------
 *.log
 logs/

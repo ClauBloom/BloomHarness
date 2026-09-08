@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Harness runtime phase.
+ * 框架运行时阶段。
  */
 public enum HarnessPhase {
     IDLE("idle"),

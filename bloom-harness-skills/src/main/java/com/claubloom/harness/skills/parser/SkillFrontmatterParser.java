@@ -8,8 +8,8 @@ import java.nio.file.Path;
 import java.util.Map;
 
 /**
- * Parses markdown frontmatter and body for Agent Skills.
- * Directly mirrors pi's frontmatter.ts and skills.ts loadSkillFromFile.
+ * 为 Agent Skills 解析 Markdown 元信息头与正文。
+ * 与 pi 的 frontmatter.ts 以及 skills.ts 中 loadSkillFromFile 实现保持一致。
  */
 public class SkillFrontmatterParser {
 
@@ -18,10 +18,10 @@ public class SkillFrontmatterParser {
     /**
      * 将文件的原始文本内容解析为结构化的 Skill 技能记录。
      *
-     * @param rawContent complete markdown text with optional YAML frontmatter
-     * @param file target file path
-     * @param scope "project" | "user" | "custom"
-     * @return parsed and validated Skill
+     * @param rawContent 完整的 Markdown 文本，可含可选的 YAML 元信息头
+     * @param file 目标文件路径
+     * @param scope 作用域："project" | "user" | "custom"
+     * @return 解析并校验后的 Skill
      */
     public Skill parse(String rawContent, Path file, String scope) {
         String name = null;
@@ -55,7 +55,7 @@ public class SkillFrontmatterParser {
             }
         }
 
-        // If name was not specified in frontmatter, fall back to directory name or base file name
+        // 若元信息头中未指定名称，则回退使用目录名或基础文件名
         if (name == null || name.isBlank()) {
             Path parent = file.getParent();
             if (parent != null && !parent.getFileName().toString().equals("skills")) {
@@ -64,7 +64,7 @@ public class SkillFrontmatterParser {
                 String fileName = file.getFileName().toString();
                 name = fileName.endsWith(".md") ? fileName.substring(0, fileName.length() - 3) : fileName;
             }
-            // Normalize fallback name to valid skill name
+            // 将回退得到的名称规范化为合法的技能名称
             name = name.toLowerCase().replaceAll("[^a-z0-9-]", "-").replaceAll("-+", "-");
             if (name.startsWith("-")) name = name.substring(1);
             if (name.endsWith("-")) name = name.substring(0, name.length() - 1);

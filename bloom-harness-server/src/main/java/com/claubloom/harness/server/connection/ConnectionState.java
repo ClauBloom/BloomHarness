@@ -9,8 +9,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Per-connection handshake state machine.
- * Mirrors pi's ConnectionState in packages/server/src/connection.ts.
+ * 按连接划分的握手状态机。
+ * 对齐 pi 在 packages/server/src/connection.ts 中的 ConnectionState。
  */
 @Getter
 public class ConnectionState {
@@ -32,7 +32,7 @@ public class ConnectionState {
         this.decoder = new ClientMessageDecoder();
     }
 
-    /** Mirrors pi's isTerminalConnection. */
+    /** 对齐 pi 的 isTerminalConnection。 */
     public boolean isTerminal() {
         return disconnected.get()
                 || stage == ConnectionStage.CLOSING

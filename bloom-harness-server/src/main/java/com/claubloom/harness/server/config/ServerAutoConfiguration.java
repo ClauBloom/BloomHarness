@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 
 /**
- * Spring Boot AutoConfiguration for BloomHarness Server module.
+ * BloomHarness Server 模块的 Spring Boot 自动配置。
  */
 @AutoConfiguration
 @EnableConfigurationProperties(ServerProperties.class)

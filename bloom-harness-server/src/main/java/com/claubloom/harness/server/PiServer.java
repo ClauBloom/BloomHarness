@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PiServer {
 
-    /** Mirrors pi's DEFAULT_HANDSHAKE_TIMEOUT_MS. */
+    /** 对齐 pi 的 DEFAULT_HANDSHAKE_TIMEOUT_MS。 */
     public static final long DEFAULT_HANDSHAKE_TIMEOUT_MS = 5_000;
 
     private final String serverId;
@@ -377,7 +377,7 @@ public class PiServer {
         try {
             onError.accept(error);
         } catch (RuntimeException ignored) {
-            // Error observers cannot affect server state.
+            // 错误观察者无法影响服务器状态。
         }
     }
 

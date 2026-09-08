@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Model token cost metrics per million tokens.
+ * 每百万令牌的模型令牌成本指标。
  */
 public record ModelCost(
         @JsonProperty(value = "input", defaultValue = "0")

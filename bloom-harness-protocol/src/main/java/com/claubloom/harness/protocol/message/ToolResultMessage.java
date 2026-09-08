@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * Tool execution transcript item.
+ * 工具执行对话记录条目。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ToolResultMessage(

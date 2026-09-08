@@ -15,8 +15,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Built-in Glob tool for discovering files matching pattern.
- * Directly mirrors pi's find.ts.
+ * 内置 Glob 工具，用于发现与模式匹配的文件。
+ * 直接对应 pi 的 find.ts。
  */
 @Slf4j
 @Component

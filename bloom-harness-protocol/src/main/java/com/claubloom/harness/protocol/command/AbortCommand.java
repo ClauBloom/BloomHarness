@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.command;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Abort command to interrupt session execution.
+ * 用于中断会话执行的 Abort 命令。
  */
 public record AbortCommand(
         @JsonProperty(value = "command", defaultValue = "abort")

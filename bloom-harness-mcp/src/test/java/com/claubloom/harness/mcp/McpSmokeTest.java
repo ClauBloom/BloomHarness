@@ -18,7 +18,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Phase 3 Smoke Tests for Model Context Protocol (MCP) Subsystem (TC-P3-05 & TC-P3-06).
+ * Model Context Protocol (MCP) 子系统的第 3 阶段冒烟测试（TC-P3-05 与 TC-P3-06）。
  */
 public class McpSmokeTest {
 
@@ -32,7 +32,7 @@ public class McpSmokeTest {
         mcpManager = new McpManager(toolRegistry);
         mockClient = new MockMcpClient("sqlite-mcp-server");
 
-        // Register simulated MCP tools on mock server
+        // 在 mock 服务器上注册模拟 MCP 工具
         mockClient.addTool(
                 "query_sql",
                 "Execute readonly SQL query",
@@ -60,15 +60,15 @@ public class McpSmokeTest {
     }
 
     /**
-     * TC-P3-05: MCP JSON-RPC 2.0 Handshake, Capability Negotiation, and Tool Discovery.
+     * TC-P3-05: MCP JSON-RPC 2.0 握手、能力协商与工具发现。
      */
     @Test
     @DisplayName("TC-P3-05: MCP Client should perform initialize handshake and discover remote tools")
     void should_initializeAndDiscoverMcpTools() throws Exception {
-        // Act - Register and mount MCP client
+        // 执行 - 注册并挂载 MCP 客户端
         mcpManager.registerClient(mockClient);
 
-        // Assert - Tool is discovered and mounted to ToolRegistry
+        // 断言 - 工具被发现并挂载到 ToolRegistry
         assertThat(toolRegistry.contains("query_sql")).isTrue();
         ToolDefinition tool = toolRegistry.find("query_sql").orElse(null);
         assertThat(tool).isNotNull();
@@ -78,27 +78,27 @@ public class McpSmokeTest {
     }
 
     /**
-     * TC-P3-06: MCP Remote Tool Execution, Parameter Marshaling, and Result Unmarshaling.
+     * TC-P3-06: MCP 远程工具执行、参数封送与结果反封送。
      */
     @Test
     @DisplayName("TC-P3-06: MCP Tool bridge should marshal parameters and unmarshal execution results")
     void should_executeRemoteMcpToolThroughBridge() throws Exception {
-        // Arrange
+        // 准备
         mcpManager.registerClient(mockClient);
         ToolDefinition tool = toolRegistry.find("query_sql").orElseThrow();
         ToolContext context = new ToolContext("session-mcp", ".", null, null);
 
-        // Act - Execute remote tool with valid SQL
+        // 执行 - 使用有效 SQL 执行远程工具
         ToolResult successRes = tool.execute(context, Map.of("sql", "SELECT * FROM users")).get();
 
-        // Assert - Result is decoded into ToolResult
+        // 断言 - 结果被解码为 ToolResult
         assertThat(successRes.isError()).isFalse();
         assertThat(successRes.output()).isEqualTo("[{\"id\":1,\"name\":\"Alice\"},{\"id\":2,\"name\":\"Bob\"}]");
 
-        // Act - Execute remote tool with error condition
+        // 执行 - 在错误条件下执行远程工具
         ToolResult errorRes = tool.execute(context, Map.of("sql", "")).get();
 
-        // Assert - Remote error is mapped into ToolResult with error flag
+        // 断言 - 远程错误被映射为带错误标志的 ToolResult
         assertThat(errorRes.isError()).isTrue();
         assertThat(errorRes.output()).contains("SQL parameter is required");
     }

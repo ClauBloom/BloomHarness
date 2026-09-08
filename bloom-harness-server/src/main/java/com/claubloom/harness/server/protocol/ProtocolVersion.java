@@ -1,8 +1,8 @@
 package com.claubloom.harness.server.protocol;
 
 /**
- * Protocol version constants and checks.
- * Mirrors pi protocol's PROTOCOL_VERSION / isSupportedProtocolVersion.
+ * 协议版本常量与校验。
+ * 对齐 pi 协议的 PROTOCOL_VERSION / isSupportedProtocolVersion。
  */
 public final class ProtocolVersion {
 

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Thinking level options for reasoning models.
+ * 推理模型的思考级别选项。
  */
 public enum ThinkingLevel {
     OFF("off"),

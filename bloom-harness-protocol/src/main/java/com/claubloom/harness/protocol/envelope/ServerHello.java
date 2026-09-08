@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.session.ServerSnapshot;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Server hello frame sent after client hello.
+ * 服务器 hello 帧,在客户端 hello 之后发送。
  */
 public record ServerHello(
         @JsonProperty(value = "type", defaultValue = "hello")

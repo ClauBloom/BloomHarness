@@ -33,7 +33,7 @@ export function useSession() {
         }
       }
     } catch (e) {
-      // ignore
+      // 忽略解析异常
     }
     return null;
   }
@@ -111,7 +111,7 @@ export function useSession() {
       if (res.ok) {
         const snapshot = await res.json();
         store.setSnapshot(snapshot);
-        // Connect SSE stream for the selected session
+        // 为选中的会话连接 SSE 事件流
         connectSse(sessionId);
         return snapshot;
       } else {
@@ -182,7 +182,7 @@ export function useSession() {
         method: 'POST',
       });
       if (res.ok) {
-        // Refresh session snapshot to get latest transcript
+        // 刷新会话快照以获取最新的对话记录
         await selectSession(targetId);
       }
     } catch (e: any) {

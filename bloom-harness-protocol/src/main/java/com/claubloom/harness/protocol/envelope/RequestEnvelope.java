@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.command.Command;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Client request envelope wrapping a command payload.
+ * 封装命令负载的客户端请求信封。
  */
 public record RequestEnvelope(
         @JsonProperty(value = "type", defaultValue = "request")

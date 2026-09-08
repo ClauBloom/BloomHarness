@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.command;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Prompt command to send user instruction to an agent session.
+ * 向智能体会话发送用户指令的 Prompt 命令。
  */
 public record PromptCommand(
         @JsonProperty(value = "command", defaultValue = "prompt")

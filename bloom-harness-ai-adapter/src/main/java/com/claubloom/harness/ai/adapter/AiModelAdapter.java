@@ -30,8 +30,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * AiModelAdapter translates Agent messages to UnifiedRequest and invokes upstream APIs via ai-router-core.
- * Implements core LlmCaller interface so it can directly power AgentLoop.
+ * AiModelAdapter 将智能体消息转换为 UnifiedRequest 统一请求体，并通过 ai-router-core 调用上游 API。
+ * 实现核心模块的 LlmCaller 接口，从而可直接驱动 AgentLoop。
  */
 @Slf4j
 @Component

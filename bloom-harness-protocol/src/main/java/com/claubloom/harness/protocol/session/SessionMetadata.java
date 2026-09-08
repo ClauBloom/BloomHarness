@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Lightweight metadata of a session.
+ * 会话的轻量元数据。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record SessionMetadata(

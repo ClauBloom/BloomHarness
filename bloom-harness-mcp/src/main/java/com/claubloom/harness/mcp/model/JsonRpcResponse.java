@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 
 /**
- * JSON-RPC 2.0 Response message.
+ * JSON-RPC 2.0 响应消息。
  */
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)

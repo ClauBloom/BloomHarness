@@ -49,9 +49,9 @@ import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Tracks acquired session runtimes, attached connections, and command execution.
- * Faithful port of pi's LiveSessionManager in packages/server/src/sessions.ts
- * (acquire loop, attach/detach lifecycle, snapshot broadcasts, idle disposal).
+ * 跟踪已获取的会话运行时、附加的连接与命令执行。
+ * 忠实移植 pi 在 packages/server/src/sessions.ts 中的 LiveSessionManager
+ * （获取循环、附加/分离生命周期、快照广播、空闲释放）。
  */
 @Slf4j
 public class LiveSessionManager {
@@ -174,7 +174,7 @@ public class LiveSessionManager {
         }, asyncExecutor);
     }
 
-    /** Removes a disconnected connection from every attached session, disposing idle ones. */
+    /** 将已断开的连接从每个已附加的会话中移除，并释放空闲的会话。 */
     public CompletableFuture<Void> disconnect(ConnectionState connection) {
         List<LiveSession> sessions = connection.getSessionIds().stream()
                 .map(liveSessions::get)

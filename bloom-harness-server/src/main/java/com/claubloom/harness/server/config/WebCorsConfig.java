@@ -5,7 +5,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Global CORS configuration allowing WebUI dev server access.
+ * 全局 CORS 配置，允许 WebUI 开发服务器访问。
  */
 @Configuration
 public class WebCorsConfig implements WebMvcConfigurer {

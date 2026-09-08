@@ -10,12 +10,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Harness lifecycle interface for driving session runs and resource integration.
+ * 驱动会话运行与资源集成的框架生命周期接口。
  */
 public interface Harness {
 
     /**
-     * Run a turn with new user instruction.
+     * 使用新的用户指令运行一个轮次。
      */
     CompletableFuture<Result<List<AgentMessage>>> run(
             List<AgentMessage> prompts,

@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
- * In-memory Mock MCP Client for offline testing and deterministic validation.
+ * 内存版 Mock MCP Client，用于离线测试和确定性校验。
  */
 public class MockMcpClient implements McpClient {
 

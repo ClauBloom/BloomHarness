@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.envelope;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * First frame sent by client upon connection.
+ * 连接建立时客户端发送的第一个帧。
  */
 public record ClientHello(
         @JsonProperty(value = "type", defaultValue = "hello")

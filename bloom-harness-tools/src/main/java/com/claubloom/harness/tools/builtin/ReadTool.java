@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Built-in Read tool with line numbering, pagination (offset/limit), and head truncation.
+ * 内置 Read 工具，支持行号、分页（offset/limit）与头部截断。
  * 严格对齐 pi-agent 的 read.ts 实现规范。
  */
 @Slf4j

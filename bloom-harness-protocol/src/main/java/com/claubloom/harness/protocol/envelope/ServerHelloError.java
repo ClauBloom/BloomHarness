@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.result.ProtocolError;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Server hello error frame sent when client handshake fails.
+ * 客户端握手失败时发送的服务器 hello 错误帧。
  */
 public record ServerHelloError(
         @JsonProperty(value = "type", defaultValue = "hello_error")

@@ -20,7 +20,7 @@
             <artifactId>bloom-harness-protocol</artifactId>
         </dependency>
 
-        <!-- Spring Context & Configuration Properties -->
+        <!-- Spring 上下文与配置属性 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -33,7 +33,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Test dependencies -->
+        <!-- 测试依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

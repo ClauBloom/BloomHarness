@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Built-in Edit tool for targeted literal replacements with uniqueness validation.
+ * 内置 Edit 工具，用于带唯一性校验的精确字面量替换。
  * 严格对齐 pi-agent 的 edit.ts 实现规范。
  */
 @Slf4j
@@ -108,7 +108,7 @@ public class EditTool implements ToolDefinition {
                     updatedContent = currentContent.substring(0, index) + newString + currentContent.substring(index + oldString.length());
                 }
 
-                // Write atomically
+                // 原子写入
                 Path tempFile = Files.createTempFile(resolvedPath.getParent(), ".tmp_edit_", ".tmp");
                 try {
                     Files.writeString(tempFile, updatedContent, StandardCharsets.UTF_8);

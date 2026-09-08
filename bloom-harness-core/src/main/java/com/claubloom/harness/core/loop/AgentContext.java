@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Mutable session execution context during Agent Loop.
+ * 智能体循环期间的可变会话执行上下文。
  */
 @Data
 @Builder

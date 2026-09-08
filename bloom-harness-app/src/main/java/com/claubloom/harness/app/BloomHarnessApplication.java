@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * BloomHarness application entry point.
- * Aggregates protocol, core, ai-adapter, tools, skills, extension, mcp, storage, and server modules.
+ * BloomHarness 应用入口。
+ * 聚合了 protocol、core、ai-adapter、tools、skills、extension、mcp、storage 与 server 模块。
  */
 @SpringBootApplication(scanBasePackages = "com.claubloom.harness")
 public class BloomHarnessApplication {

@@ -5,9 +5,9 @@ import com.claubloom.harness.protocol.result.ProtocolErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Server error hierarchy mirroring pi packages/server/src/errors.ts.
- * Errors that safely cross the protocol boundary extend {@link PiServerError};
- * unsafe failures use {@link InternalServerError} whose cause is reported but never serialized.
+ * 服务器错误层级，对齐 pi 的 packages/server/src/errors.ts。
+ * 可安全跨越协议边界的错误继承 {@link PiServerError}；
+ * 不安全的失败使用 {@link InternalServerError}，其原因是会上报但绝不序列化的。
  */
 public final class PiServerErrors {
 

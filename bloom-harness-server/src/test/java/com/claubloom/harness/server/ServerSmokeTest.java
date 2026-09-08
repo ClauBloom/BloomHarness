@@ -52,9 +52,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 /**
- * Phase 4 server smoke test (TC-P4-02): framed pi protocol handshake, command
- * execution, and real-time event broadcasting over in-memory byte connections.
- * Mirrors pi's server testing suite (TestSessionRuntime semantics).
+ * 阶段 4 服务器冒烟测试（TC-P4-02）：分帧 pi 协议的握手、命令
+ * 执行，以及基于内存字节连接的实时事件广播。
+ * 对齐 pi 的服务器测试套件（TestSessionRuntime 语义）。
  */
 public class ServerSmokeTest {
 
@@ -84,7 +84,7 @@ public class ServerSmokeTest {
     }
 
     // ------------------------------------------------------------------
-    // Protocol round-trip
+    // 协议往返
     // ------------------------------------------------------------------
 
     private void sendClient(ClientMessage message) {
@@ -97,7 +97,7 @@ public class ServerSmokeTest {
         return message;
     }
 
-    /** Pops messages until a response envelope for the given request id arrives. */
+    /** 持续取出消息，直到指定请求 id 的响应信封到达。 */
     private ResponseEnvelope nextResponse(String requestId, List<ServerMessage> sideBand) throws InterruptedException {
         for (;;) {
             ServerMessage message = nextMessage();
@@ -114,7 +114,7 @@ public class ServerSmokeTest {
     @Timeout(30)
     @DisplayName("TC-P4-02: handshake, create, prompt, and event broadcasting over framed connection")
     void shouldHandshakeCreateAndBroadcastEvents() throws Exception {
-        // 1. Hello handshake -> ServerHello carrying initial server snapshot
+        // 1. Hello 握手 -> 携带初始服务器快照的 ServerHello
         sendClient(new ClientHello(1));
         ServerMessage first = nextMessage();
         assertThat(first).isInstanceOf(ServerHello.class);
@@ -125,7 +125,7 @@ public class ServerSmokeTest {
         assertThat(hello.snapshot().models()).hasSize(1);
         assertThat(hello.snapshot().serverId()).isEqualTo("test-server");
 
-        // 2. create -> response + session_snapshot broadcast to attached connection
+        // 2. create -> 响应 + 向已附加的连接广播 session_snapshot
         List<ServerMessage> sideBand = new ArrayList<>();
         sendClient(new RequestEnvelope("req-1",
                 new com.claubloom.harness.protocol.command.CreateCommand(
@@ -136,7 +136,7 @@ public class ServerSmokeTest {
         String sessionId = ((com.claubloom.harness.protocol.command.CreateResult) response.result())
                 .session().id();
 
-        // Broadcast triggered by create (session_snapshot and/or server_snapshot)
+        // create 触发的广播（session_snapshot 和/或 server_snapshot）
         List<ServerMessage> broadcasts = new ArrayList<>(sideBand);
         ServerMessage extra = received.poll(2, TimeUnit.SECONDS);
         if (extra != null) {
@@ -147,14 +147,14 @@ public class ServerSmokeTest {
                 .anyMatch(e -> e instanceof ServerEvent.SessionSnapshotEvent))
                 .as("expected a session_snapshot broadcast after create").isTrue();
 
-        // 3. prompt -> runtime emits progress + snapshot events
+        // 3. prompt -> 运行时发出进度与快照事件
         sideBand.clear();
         sendClient(new RequestEnvelope("req-2",
                 new com.claubloom.harness.protocol.command.PromptCommand(sessionId, "hello world")));
         ResponseEnvelope promptResponse = nextResponse("req-2", sideBand);
         assertThat(promptResponse.ok()).isTrue();
 
-        // Progress envelopes flow to the connection in real time
+        // 进度信封实时流向连接
         List<ServerMessage> progressStream = new ArrayList<>(sideBand);
         for (int i = 0; i < 3; i++) {
             ServerMessage trailing = received.poll(1, TimeUnit.SECONDS);
@@ -180,7 +180,7 @@ public class ServerSmokeTest {
         assertThat(sawProgress).as("expected assistant_delta progress broadcast").isTrue();
         assertThat(sawSnapshot).as("expected session snapshot broadcast").isTrue();
 
-        // 4. list reflects the live session
+        // 4. list 反映实时会话
         sendClient(new RequestEnvelope("req-3", new com.claubloom.harness.protocol.command.ListCommand()));
         ResponseEnvelope listResponse = nextResponse("req-3", null);
         assertThat(listResponse.ok()).isTrue();
@@ -196,7 +196,7 @@ public class ServerSmokeTest {
     @Timeout(30)
     @DisplayName("protocol violations produce hello_error and close the connection")
     void shouldFailProtocolOnInvalidFirstMessage() throws Exception {
-        // First message must be hello (pi server.ts dispatchMessage contract)
+        // 第一条消息必须是 hello（pi server.ts dispatchMessage 约定）
         sendClient(new RequestEnvelope("req-x",
                 new com.claubloom.harness.protocol.command.ListCommand()));
         ServerMessage message = nextMessage();
@@ -247,13 +247,13 @@ public class ServerSmokeTest {
                 .session().phase()).isEqualTo(SessionPhase.IDLE);
     }
 
-    /** Removes any pending event envelopes so assertions see responses only. */
+    /** 移除所有待处理的事件信封，使断言只看到响应。 */
     private void drainEvents() {
         received.removeIf(message -> message instanceof EventEnvelope);
     }
 
     // ------------------------------------------------------------------
-    // Test doubles mirroring pi's server/src/testing
+    // 对齐 pi 的 server/src/testing 的测试替身
     // ------------------------------------------------------------------
 
     private static final class TestServerService implements PiServerService {
@@ -446,7 +446,7 @@ public class ServerSmokeTest {
             return CompletableFuture.completedFuture(null);
         }
 
-        /** Accumulates outgoing bytes and dispatches whole frames as decoded ServerMessages. */
+        /** 累积输出字节，并将完整的帧分发为解码后的 ServerMessage。 */
         private final class FrameBuffer {
             private final List<byte[]> bytes = new ArrayList<>();
 

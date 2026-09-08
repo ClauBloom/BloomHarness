@@ -33,7 +33,7 @@ interface Provider {
   isConfigured?: boolean;
 }
 
-// Providers State
+// 供应商列表状态
 const providers = ref<Provider[]>([]);
 const selectedProviderId = ref<string>('');
 const isLoading = ref(false);
@@ -44,7 +44,7 @@ const testResult = ref<{ ok: boolean; latencyMs?: number; message: string } | nu
 const statusMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null);
 const showApiKey = ref(false);
 
-// New Model Input State
+// 新增模型输入状态
 const newModelInput = ref('');
 
 const currentProvider = ref<Provider>({
@@ -123,7 +123,7 @@ function handleRemoveModel(index: number) {
   currentProvider.value.models.splice(index, 1);
 }
 
-// Test Provider Connection
+// 测试供应商连接
 async function handleTestConnection() {
   if (!currentProvider.value.baseUrl) {
     showMessage('error', '请先填写 Base URL');
@@ -155,7 +155,7 @@ async function handleTestConnection() {
   }
 }
 
-// Fetch Model List from Upstream Provider
+// 从上游供应商拉取模型列表
 async function handleFetchModels() {
   if (!currentProvider.value.baseUrl) {
     showMessage('error', '请先填写 Base URL 才能获取模型列表');
@@ -177,7 +177,7 @@ async function handleFetchModels() {
     if (res.ok) {
       const data = await res.json();
       if (data.ok && Array.isArray(data.models) && data.models.length > 0) {
-        // Merge without duplicates
+        // 去重合并
         const existing = new Set(currentProvider.value.models || []);
         let addedCount = 0;
         for (const m of data.models) {
@@ -222,7 +222,7 @@ async function handleSaveProvider() {
           isConfigured: isKeyConfigured 
         };
       }
-      // Broadcast event so ChatPanel and other components immediately refresh their model lists
+      // 广播事件,让 ChatPanel 等组件立即刷新各自的模型列表
       window.dispatchEvent(new CustomEvent('bloom:providers-updated'));
     } else {
       const err = await res.json();
@@ -269,7 +269,7 @@ function showMessage(type: 'success' | 'error', text: string) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fadeIn">
     <div class="w-full max-w-3xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
       
-      <!-- Top Header -->
+      <!-- 顶部标题栏 -->
       <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/80">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-xl bg-purple-950/80 border border-purple-500/30 flex items-center justify-center text-purple-400">
@@ -292,9 +292,9 @@ function showMessage(type: 'success' | 'error', text: string) {
         </button>
       </div>
 
-      <!-- Main Body: Provider Directory + Card Editor -->
+      <!-- 主体:供应商目录 + 卡片编辑器 -->
       <div class="flex-1 flex overflow-hidden min-h-[440px]">
-        <!-- Left: Provider Directory Sidebar -->
+        <!-- 左侧:供应商目录侧边栏 -->
         <div class="w-56 border-r border-zinc-800 bg-zinc-950/40 p-3.5 flex flex-col justify-between shrink-0">
           <div class="space-y-1.5 overflow-y-auto">
             <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-zinc-500 px-2 py-1">
@@ -302,12 +302,12 @@ function showMessage(type: 'success' | 'error', text: string) {
               <span class="text-[10px] font-mono text-zinc-600">{{ providers.length }}</span>
             </div>
 
-            <!-- Empty state -->
+            <!-- 空状态 -->
             <div v-if="providers.length === 0" class="p-3 text-center text-xs text-zinc-600">
               暂无配置，请点击下方添加
             </div>
 
-            <!-- Provider Rows with Status Dots -->
+            <!-- 带状态圆点的供应商行 -->
             <button
               v-for="p in providers"
               :key="p.providerId"
@@ -318,7 +318,7 @@ function showMessage(type: 'success' | 'error', text: string) {
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border-transparent'"
             >
               <div class="flex items-center gap-2 truncate">
-                <!-- Status Dot (🟢 Configured / ⚪ Empty Key) -->
+                <!-- 状态圆点(🟢 已配置 / ⚪ 空密钥) -->
                 <span 
                   class="w-2 h-2 rounded-full shrink-0 transition-colors" 
                   :class="p.isConfigured ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-zinc-600'"
@@ -333,7 +333,7 @@ function showMessage(type: 'success' | 'error', text: string) {
             </button>
           </div>
 
-          <!-- Add Provider Action -->
+          <!-- 添加供应商操作 -->
           <button
             @click="handleAddCustomProvider"
             class="w-full py-2.5 px-3 rounded-xl border border-dashed border-zinc-700 hover:border-purple-500/80 hover:text-purple-300 text-zinc-400 text-xs flex items-center justify-center gap-1.5 transition bg-zinc-900/40 hover:bg-purple-950/20"
@@ -343,9 +343,9 @@ function showMessage(type: 'success' | 'error', text: string) {
           </button>
         </div>
 
-        <!-- Right: Provider Card Detail & Editor -->
+        <!-- 右侧:供应商卡片详情与编辑器 -->
         <div class="flex-1 p-6 overflow-y-auto space-y-4">
-          <!-- Status Notification Banner -->
+          <!-- 状态通知横幅 -->
           <div 
             v-if="statusMessage"
             class="p-3 rounded-xl text-xs flex items-center gap-2 transition animate-fadeIn"
@@ -359,7 +359,7 @@ function showMessage(type: 'success' | 'error', text: string) {
           </div>
 
           <div v-if="currentProvider.providerId" class="space-y-4">
-            <!-- Provider Name & Wire Protocol -->
+            <!-- 供应商名称与通讯协议 -->
             <div class="grid grid-cols-3 gap-3.5">
               <div class="col-span-2">
                 <label class="block text-xs font-medium text-zinc-400 mb-1.5">服务商名称 (Provider Name)</label>
@@ -397,7 +397,7 @@ function showMessage(type: 'success' | 'error', text: string) {
               />
             </div>
 
-            <!-- API Key & Connection Probe -->
+            <!-- API Key 与连接探测 -->
             <div class="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3.5 space-y-3">
               <div class="flex items-center justify-between">
                 <label class="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
@@ -405,7 +405,7 @@ function showMessage(type: 'success' | 'error', text: string) {
                   <span>API Key (机密凭证)</span>
                 </label>
 
-                <!-- Test Connection Button -->
+                <!-- 测试连接按钮 -->
                 <button 
                   type="button"
                   @click="handleTestConnection"
@@ -435,7 +435,7 @@ function showMessage(type: 'success' | 'error', text: string) {
                 </button>
               </div>
 
-              <!-- Test Connection Feedback Result -->
+              <!-- 测试连接反馈结果 -->
               <div 
                 v-if="testResult" 
                 class="text-[11px] p-2 rounded-lg flex items-center gap-2"
@@ -447,7 +447,7 @@ function showMessage(type: 'success' | 'error', text: string) {
               </div>
             </div>
 
-            <!-- Model List Editor -->
+            <!-- 模型列表编辑器 -->
             <div class="space-y-2.5">
               <div class="flex items-center justify-between">
                 <label class="text-xs font-medium text-zinc-400 flex items-center gap-1.5">
@@ -469,7 +469,7 @@ function showMessage(type: 'success' | 'error', text: string) {
                 </div>
               </div>
 
-              <!-- Input to add model -->
+              <!-- 添加模型的输入框 -->
               <div class="flex items-center gap-2">
                 <input 
                   v-model="newModelInput"
@@ -488,7 +488,7 @@ function showMessage(type: 'success' | 'error', text: string) {
                 </button>
               </div>
 
-              <!-- Models Badges / List -->
+              <!-- 模型徽章/列表 -->
               <div class="flex flex-wrap gap-2 pt-1 max-h-36 overflow-y-auto">
                 <div 
                   v-for="(model, idx) in currentProvider.models" 
@@ -513,7 +513,7 @@ function showMessage(type: 'success' | 'error', text: string) {
             </div>
           </div>
 
-          <!-- Empty state -->
+          <!-- 空状态 -->
           <div v-else class="h-full flex flex-col items-center justify-center text-zinc-500 text-xs py-16">
             <Bot class="w-8 h-8 text-zinc-700 mb-2" />
             <span>请在左侧选择或添加供应商</span>
@@ -521,9 +521,9 @@ function showMessage(type: 'success' | 'error', text: string) {
         </div>
       </div>
 
-      <!-- Footer Actions -->
+      <!-- 底部操作 -->
       <div class="px-6 py-3.5 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between">
-        <!-- Delete Button -->
+        <!-- 删除按钮 -->
         <div>
           <button
             v-if="currentProvider.providerId"
@@ -535,7 +535,7 @@ function showMessage(type: 'success' | 'error', text: string) {
           </button>
         </div>
 
-        <!-- Action Buttons -->
+        <!-- 操作按钮 -->
         <div class="flex items-center gap-2.5">
           <button 
             @click="emit('close')"

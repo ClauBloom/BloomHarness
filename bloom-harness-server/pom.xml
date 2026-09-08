@@ -32,7 +32,7 @@
             <artifactId>bloom-harness-ai-adapter</artifactId>
         </dependency>
 
-        <!-- Spring Boot Web & WebSocket -->
+        <!-- Spring Boot Web 与 WebSocket -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -52,7 +52,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Test dependencies -->
+        <!-- 测试依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

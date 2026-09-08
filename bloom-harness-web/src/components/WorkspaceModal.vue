@@ -181,7 +181,7 @@ async function handlePickSystemFolder() {
       if (data.success && data.path) {
         await validateAndBrowse(data.path, true);
       } else if (data.message) {
-        // Only set error if not cancelled
+        // 仅在非用户主动取消时才设置错误
         if (!data.message.includes('已关闭')) {
           validationError.value = data.message;
         }
@@ -207,7 +207,7 @@ async function handleConfirm(createNewSession: boolean) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fadeIn">
     <div class="w-full max-w-2xl bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
       
-      <!-- Header -->
+      <!-- 头部 -->
       <div class="h-14 px-6 border-b border-gray-800 flex items-center justify-between shrink-0 bg-gray-900/80">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
@@ -226,10 +226,10 @@ async function handleConfirm(createNewSession: boolean) {
         </button>
       </div>
 
-      <!-- Content Body -->
+      <!-- 内容主体 -->
       <div class="p-6 overflow-y-auto space-y-5 flex-1 text-xs">
         
-        <!-- Path Input Box -->
+        <!-- 路径输入框 -->
         <div class="space-y-1.5">
           <div class="flex items-center justify-between">
             <label class="block font-medium text-gray-300">当前工作区路径</label>
@@ -260,7 +260,7 @@ async function handleConfirm(createNewSession: boolean) {
               </div>
             </div>
 
-            <!-- System Folder Selection Button -->
+            <!-- 系统文件夹选择按钮 -->
             <button 
               @click="handlePickSystemFolder"
               :disabled="isPickingSystemFolder"
@@ -288,7 +288,7 @@ async function handleConfirm(createNewSession: boolean) {
           </div>
         </div>
 
-        <!-- Quick Locations / Recent -->
+        <!-- 快捷位置/最近使用 -->
         <div class="space-y-2">
           <div class="text-[11px] font-medium text-gray-400 flex items-center gap-1.5">
             <History class="w-3.5 h-3.5 text-purple-400" />
@@ -318,7 +318,7 @@ async function handleConfirm(createNewSession: boolean) {
           </div>
         </div>
 
-        <!-- Directory Browser Tree -->
+        <!-- 目录浏览树 -->
         <div class="space-y-2">
           <div class="flex items-center justify-between text-[11px] text-gray-400">
             <div class="flex items-center gap-1.5">
@@ -329,7 +329,7 @@ async function handleConfirm(createNewSession: boolean) {
           </div>
 
           <div class="bg-gray-950 border border-gray-800 rounded-xl p-2 max-h-56 overflow-y-auto space-y-1">
-            <!-- Go to parent dir -->
+            <!-- 返回上一级目录 -->
             <button 
               v-if="parentBrowsePath"
               @click="handleGoParent"
@@ -343,7 +343,7 @@ async function handleConfirm(createNewSession: boolean) {
               该目录下无子文件夹
             </div>
 
-            <!-- Directory Items -->
+            <!-- 目录项列表 -->
             <div 
               v-for="dir in directoryList" 
               :key="dir.path"
@@ -362,7 +362,7 @@ async function handleConfirm(createNewSession: boolean) {
 
       </div>
 
-      <!-- Footer Actions -->
+      <!-- 底部操作 -->
       <div class="p-4 px-6 border-t border-gray-800 bg-gray-900/90 flex items-center justify-between shrink-0">
         <div class="text-[11px] text-gray-500 font-mono truncate max-w-[280px]">
           已选: <span class="text-purple-300">{{ pathInput || '未选择' }}</span>

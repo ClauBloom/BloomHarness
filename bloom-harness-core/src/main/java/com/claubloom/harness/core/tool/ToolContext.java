@@ -4,7 +4,7 @@ import com.claubloom.harness.core.loop.AgentContext;
 import com.claubloom.harness.core.loop.AgentEventSink;
 
 /**
- * Context provided to a tool during invocation.
+ * 工具调用期间提供给工具的上下文。
  */
 public record ToolContext(
         String sessionId,

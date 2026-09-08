@@ -15,8 +15,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MCP Manager manages active MCP server connections, performs discovery,
- * and mounts MCP tools to the Core ToolRegistry.
+ * MCP Manager 管理活动的 MCP 服务器连接、执行发现，
+ * 并将 MCP 工具挂载到核心 ToolRegistry。
  */
 @Slf4j
 @Component
@@ -32,11 +32,11 @@ public class McpManager implements Closeable {
         clients.put(client.getServerName(), client);
 
         try {
-            // 1. Handshake initialize
+            // 1. 握手并初始化
             Map<String, Object> initResult = client.initialize().get();
             log.info("MCP Server '{}' initialized: {}", client.getServerName(), initResult);
 
-            // 2. Discover tools
+            // 2. 发现工具
             List<McpToolInfo> toolInfos = client.listTools().get();
             List<ToolDefinition> mountedTools = new ArrayList<>();
 

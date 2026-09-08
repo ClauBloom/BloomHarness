@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.command;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Steer command to inject user guidance during turn execution.
+ * 在执行轮次期间注入用户引导的 Steer 命令。
  */
 public record SteerCommand(
         @JsonProperty(value = "command", defaultValue = "steer")

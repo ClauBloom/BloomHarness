@@ -15,7 +15,7 @@
     <description>Immutable protocol schemas and serialization models (Zero Framework Dependencies)</description>
 
     <dependencies>
-        <!-- Jackson Databind for JSON serialization/deserialization -->
+        <!-- Jackson Databind,用于 JSON 序列化/反序列化 -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -32,13 +32,13 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
-        <!-- CBOR dataformat for length-prefixed frame payloads (mirrors pi protocol codec) -->
+        <!-- CBOR 数据格式,用于带长度前缀的帧负载(镜像 pi 协议编解码器) -->
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-cbor</artifactId>
         </dependency>
 
-        <!-- Test dependencies -->
+        <!-- 测试依赖 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

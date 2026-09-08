@@ -24,7 +24,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Phase 2 Smoke Test for AI Model Adapter (TC-P2-01, TC-P2-02).
+ * 阶段 2：AI 模型适配器冒烟测试（TC-P2-01、TC-P2-02）。
  */
 public class AiAdapterSmokeTest {
 
@@ -52,12 +52,12 @@ public class AiAdapterSmokeTest {
     }
 
     /**
-     * TC-P2-01: Protocol Conversion Integration (OpenAI & Anthropic formats).
+     * TC-P2-01：协议转换集成（OpenAI 与 Anthropic 格式）。
      */
     @Test
     @DisplayName("TC-P2-01: Should convert UnifiedRequest to both OpenAI and Anthropic format payloads")
     void should_convertUnifiedRequest_to_openAiAndAnthropicPayloads() {
-        // Arrange
+        // 准备
         var providerRegistry = new com.claubloom.harness.ai.provider.ProviderRegistry();
         var adapter = new com.claubloom.harness.ai.adapter.AiModelAdapter(protocolRegistry, providerRegistry, streamAdapter);
 
@@ -69,7 +69,7 @@ public class AiAdapterSmokeTest {
                 .model(ModelRef.of("openai", "gpt-4o"))
                 .build();
 
-        // Act - Convert via AiModelAdapter for OpenAI
+        // 执行 —— 通过 AiModelAdapter 为 OpenAI 转换
         UnifiedRequest openAiUnifiedReq = adapter.toUnifiedRequest(context, config, ModelRef.of("openai", "gpt-4o"), "openai");
         openAiUnifiedReq.setTemperature(0.7);
         openAiUnifiedReq.setMaxTokens(2048);
@@ -84,7 +84,7 @@ public class AiAdapterSmokeTest {
         var openAiConverter = protocolRegistry.getRequestConverter("openai");
         Map<String, Object> openAiPayload = openAiConverter.buildUpstreamRequest(openAiUnifiedReq, "gpt-4o");
 
-        // Assert OpenAI
+        // 断言 OpenAI 格式
         assertThat(openAiPayload).isNotNull();
         assertThat(openAiPayload.get("model")).isEqualTo("gpt-4o");
         assertThat(openAiPayload.get("temperature")).isEqualTo(0.7);
@@ -95,7 +95,7 @@ public class AiAdapterSmokeTest {
         assertThat(openAiMessages.stream().anyMatch(m -> "system".equals(m.get("role")))).isTrue();
         assertThat(openAiPayload).containsKey("tools");
 
-        // Act - Convert via AiModelAdapter for Anthropic
+        // 执行 —— 通过 AiModelAdapter 为 Anthropic 转换
         UnifiedRequest anthropicUnifiedReq = adapter.toUnifiedRequest(context, config, ModelRef.of("anthropic", "claude-3-5-sonnet-20241022"), "anthropic");
         anthropicUnifiedReq.setTemperature(0.7);
         anthropicUnifiedReq.setMaxTokens(2048);
@@ -104,7 +104,7 @@ public class AiAdapterSmokeTest {
         var anthropicConverter = protocolRegistry.getRequestConverter("anthropic");
         Map<String, Object> anthropicPayload = anthropicConverter.buildUpstreamRequest(anthropicUnifiedReq, "claude-3-5-sonnet-20241022");
 
-        // Assert Anthropic
+        // 断言 Anthropic 格式
         assertThat(anthropicPayload).isNotNull();
         assertThat(anthropicPayload.get("model")).isEqualTo("claude-3-5-sonnet-20241022");
         assertThat(anthropicPayload.get("system")).isEqualTo("You are an expert coder.");
@@ -116,12 +116,12 @@ public class AiAdapterSmokeTest {
     }
 
     /**
-     * TC-P2-02: SSE Streaming Chunk Proxy and Token Accumulation.
+     * TC-P2-02：SSE 流式分片转发与 Token 累积。
      */
     @Test
     @DisplayName("TC-P2-02: Should parse SSE stream chunks and accumulate tokens and tool calls accurately")
     void should_parseSseChunksAndAccumulateAssistantMessage() {
-        // Arrange
+        // 准备
         String chunk1 = "data: {\"id\":\"chatcmpl-1\",\"model\":\"gpt-4o\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"Let me \"},\"finish_reason\":null}]}";
         String chunk2 = "data: {\"id\":\"chatcmpl-1\",\"model\":\"gpt-4o\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"read the file.\"},\"finish_reason\":null}]}";
         String chunk3 = "data: {\"id\":\"chatcmpl-1\",\"model\":\"gpt-4o\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_abc\",\"type\":\"function\",\"function\":{\"name\":\"read\",\"arguments\":\"{\\\"path\\\":\"}}]},\"finish_reason\":null}]}";
@@ -133,7 +133,7 @@ public class AiAdapterSmokeTest {
         List<String> rawChunks = List.of(chunk1, chunk2, chunk3, chunk4, chunkDone);
         List<UnifiedStreamChunk> parsedChunks = new ArrayList<>();
 
-        // Act
+        // 执行
         for (String raw : rawChunks) {
             UnifiedStreamChunk chunk = streamAdapter.parseOpenAiChunk(raw);
             if (chunk != null) {
@@ -144,13 +144,13 @@ public class AiAdapterSmokeTest {
 
         var assistantMessage = accumulator.toAssistantMessage(objectMapper);
 
-        // Assert
+        // 断言
         assertThat(parsedChunks).hasSize(4);
         assertThat(assistantMessage).isNotNull();
         assertThat(assistantMessage.id()).isEqualTo("msg-stream-01");
         assertThat(assistantMessage.stopReason()).isEqualTo("toolUse");
 
-        // Contents should have 1 text content ("Let me read the file.") and 1 tool call ("read")
+        // 内容应包含 1 条文本内容（"Let me read the file."）与 1 次工具调用（"read"）
         assertThat(assistantMessage.content()).hasSize(2);
         assertThat(assistantMessage.content().get(0)).isInstanceOf(com.claubloom.harness.protocol.content.TextContent.class);
         var textContent = (com.claubloom.harness.protocol.content.TextContent) assistantMessage.content().get(0);
@@ -166,13 +166,13 @@ public class AiAdapterSmokeTest {
     }
 
     /**
-     * TC-P2-03: Verify ProtocolRegistry routes payloads to Anthropic/OpenAI formats,
-     * and UpstreamStreamClient protocol detection maps to the correct ApiKeyConfig.
+     * TC-P2-03：验证 ProtocolRegistry 将负载路由为 Anthropic/OpenAI 格式，
+     * 且 UpstreamStreamClient 的协议检测可映射到正确的 ApiKeyConfig。
      */
     @Test
     @DisplayName("TC-P2-03: Protocol conversion produces Anthropic and OpenAI payloads with correct schemas")
     void should_resolveUpstreamUrlAndHeaders_via_protocolSpecMap() throws Exception {
-        // Arrange
+        // 准备
         var providerRegistry = new com.claubloom.harness.ai.provider.ProviderRegistry();
         var adapter = new com.claubloom.harness.ai.adapter.AiModelAdapter(protocolRegistry, providerRegistry, streamAdapter);
 
@@ -183,17 +183,17 @@ public class AiAdapterSmokeTest {
                 "openai-custom", "Custom OpenAI", "http://64.83.12.37:8045/v1", "sk-openai-test123", "openai"
         );
 
-        // Act - convert provider configs into ai-router-core ApiKeyConfig (which drives URL build + header injection)
+        // 执行 —— 将供应商配置转换为 ai-router-core 的 ApiKeyConfig（用于驱动 URL 构建与请求头注入）
         var antKeyConfig = com.claubloom.harness.ai.provider.ProviderRegistry.toApiKeyConfig(anthropicProvider);
         var openAiKeyConfig = com.claubloom.harness.ai.provider.ProviderRegistry.toApiKeyConfig(openAiProvider);
 
-        // Assert protocol & key fidelity through the ai-router-core domain model
+        // 断言 —— 经 ai-router-core 领域模型校验协议与密钥的一致性
         assertThat(antKeyConfig.getProtocol()).isEqualTo("anthropic");
         assertThat(antKeyConfig.getApiKey()).isEqualTo("sk-ant-test123");
         assertThat(openAiKeyConfig.getProtocol()).isEqualTo("openai");
         assertThat(openAiKeyConfig.getApiKey()).isEqualTo("sk-openai-test123");
 
-        // Act - protocol converters normalize a UnifiedRequest into provider-specific payloads
+        // 执行 —— 协议转换器将 UnifiedRequest 规范化为各供应商专属的负载
         var context = new com.claubloom.harness.core.loop.AgentContext();
         context.getMessages().add(com.claubloom.harness.protocol.message.UserMessage.of("Hi"));
         var config = com.claubloom.harness.core.loop.AgentLoopConfig.builder()
@@ -215,12 +215,12 @@ public class AiAdapterSmokeTest {
     }
 
     /**
-     * TC-P2-04: Streaming Tool Call chunks missing index field.
+     * TC-P2-04：缺失 index 字段的流式工具调用分片。
      */
     @Test
     @DisplayName("TC-P2-04: Should aggregate tool call chunks correctly even when index field is omitted")
     void should_aggregateToolCallChunks_when_indexFieldMissing() {
-        // Arrange
+        // 准备
         String chunkNameOnly = "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"id\":\"call_bash_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\"}}]}}]}";
         String chunkArgsPart1 = "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"function\":{\"arguments\":\"{\\\"command\\\":\\\"ls \"}}]}}]}";
         String chunkArgsPart2 = "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"function\":{\"arguments\":\"-la\\\"}\"}}]}}]}";
@@ -236,7 +236,7 @@ public class AiAdapterSmokeTest {
 
         var assistantMsg = accumulator.toAssistantMessage(objectMapper);
 
-        // Assert
+        // 断言
         assertThat(assistantMsg.content()).hasSize(1);
         assertThat(assistantMsg.content().get(0)).isInstanceOf(com.claubloom.harness.protocol.content.ToolCallContent.class);
         var tc = (com.claubloom.harness.protocol.content.ToolCallContent) assistantMsg.content().get(0);
@@ -247,12 +247,12 @@ public class AiAdapterSmokeTest {
     }
 
     /**
-     * TC-P2-05: Anthropic SSE Stream parsing and message accumulation.
+     * TC-P2-05：Anthropic SSE 流解析与消息累积。
      */
     @Test
     @DisplayName("TC-P2-05: Should parse Anthropic SSE stream lines and accumulate text and tool calls")
     void should_parseAnthropicSseStream_and_accumulateAssistantMessage() throws Exception {
-        // Arrange
+        // 准备
         String ssePayload = """
                 event: message_start
                 data: {"type":"message_start","message":{"id":"msg_ant_1","type":"message","role":"assistant","model":"claude-3-5-sonnet","content":[],"stop_reason":null,"usage":{"input_tokens":25,"output_tokens":0}}}
@@ -289,19 +289,19 @@ public class AiAdapterSmokeTest {
                 "msg_ant_1", ModelRef.of("anthropic", "claude-3-5-sonnet")
         );
 
-        // Act
+        // 执行
         try (var reader = new java.io.BufferedReader(new java.io.StringReader(ssePayload))) {
             streamAdapter.consumeAnthropicStream(reader, accumulator, null);
         }
 
         var assistantMsg = accumulator.toAssistantMessage(objectMapper);
 
-        // Assert
+        // 断言
         assertThat(assistantMsg).isNotNull();
         assertThat(assistantMsg.id()).isEqualTo("msg_ant_1");
         assertThat(assistantMsg.stopReason()).isEqualTo("toolUse");
 
-        // 1 text content + 1 tool call
+        // 1 条文本内容 + 1 次工具调用
         assertThat(assistantMsg.content()).hasSize(2);
         assertThat(assistantMsg.content().get(0)).isInstanceOf(com.claubloom.harness.protocol.content.TextContent.class);
         var textContent = (com.claubloom.harness.protocol.content.TextContent) assistantMsg.content().get(0);
@@ -315,7 +315,7 @@ public class AiAdapterSmokeTest {
         Map<String, Object> input = (Map<String, Object>) toolCall.input();
         assertThat(input).containsEntry("command", "echo 'hello'");
 
-        // Usage check
+        // 用量校验
         assertThat(assistantMsg.usage()).isNotNull();
         assertThat(assistantMsg.usage().input()).isEqualTo(25);
         assertThat(assistantMsg.usage().output()).isGreaterThan(0);

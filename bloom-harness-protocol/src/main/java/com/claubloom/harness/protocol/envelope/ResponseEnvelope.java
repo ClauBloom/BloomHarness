@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Server response envelope answering a request envelope.
+ * 应答请求信封的服务器响应信封。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ResponseEnvelope(

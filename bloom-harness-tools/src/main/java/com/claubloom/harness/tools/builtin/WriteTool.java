@@ -69,20 +69,20 @@ public class WriteTool implements ToolDefinition {
                     return ToolResult.error("Target path is an existing directory: " + rawPath);
                 }
 
-                // Ensure parent directory exists
+                // 确保父目录存在
                 Path parent = resolvedPath.getParent();
                 if (parent != null && !Files.exists(parent)) {
                     Files.createDirectories(parent);
                 }
 
-                // Atomic write: write to temp file in the same directory, then rename
+                // 原子写入: 先在同一目录写入临时文件，再重命名
                 Path tempFile = Files.createTempFile(parent != null ? parent : resolvedPath.getParent(), ".tmp_write_", ".tmp");
                 try {
                     Files.writeString(tempFile, content, StandardCharsets.UTF_8);
                     try {
                         Files.move(tempFile, resolvedPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
                     } catch (Exception e) {
-                        // Fallback if atomic move across filesystems is unsupported
+                        // 若跨文件系统的原子移动不受支持，则回退到普通移动
                         Files.move(tempFile, resolvedPath, StandardCopyOption.REPLACE_EXISTING);
                     }
                 } finally {

@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.model.ModelRef;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Change the active model for an existing session.
+ * 更改现有会话的活动模型。
  */
 public record SetModelCommand(
         @JsonProperty(value = "command", defaultValue = "set_model")

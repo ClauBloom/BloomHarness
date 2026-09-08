@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.command;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * List all active/stored sessions.
+ * 列出所有活动/已存储的会话。
  */
 public record ListCommand(
         @JsonProperty(value = "command", defaultValue = "list")

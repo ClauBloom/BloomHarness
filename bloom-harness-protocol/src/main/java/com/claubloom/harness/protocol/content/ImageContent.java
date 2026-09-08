@@ -3,7 +3,7 @@ package com.claubloom.harness.protocol.content;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Image message content item (base64 encoded).
+ * 图片消息内容条目(base64 编码)。
  */
 public record ImageContent(
         @JsonProperty(value = "type", defaultValue = "image")

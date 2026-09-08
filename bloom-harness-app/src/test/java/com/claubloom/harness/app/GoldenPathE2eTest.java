@@ -40,10 +40,10 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 /**
- * Phase 4 end-to-end Golden Path (TC-P4-04).
- * Drives a real prompt through the PiServer runtime boundary: AgentLoop fires,
- * the model issues read then edit tool calls (executed inside the path sandbox),
- * results persist to SQLite, and SSE progress events stream until completion.
+ * 阶段 4 端到端黄金路径测试(TC-P4-04)。
+ * 通过 PiServer 运行时边界驱动真实提示词:AgentLoop 触发后,
+ * 模型依次发起 read 与 edit 工具调用(在路径沙箱内执行),
+ * 结果持久化到 SQLite,SSE 进度事件持续推送直至完成。
  */
 @SpringBootTest(classes = BloomHarnessApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class GoldenPathE2eTest {
@@ -131,21 +131,21 @@ public class GoldenPathE2eTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 return switch (llmCalls.incrementAndGet()) {
-                    // Turn 1: model requests Read(test.txt)
+                    // 第 1 轮:模型请求调用 Read(test.txt)
                     case 1 -> sseResponse(toolCallChunk("call-read", "read", "{\"path\":\"test.txt\"}")
                             + finalChunk("tool_calls") + "data: [DONE]\n\n");
-                    // Turn 2: model requests Edit(test.txt) after seeing the file contents
+                    // 第 2 轮:模型在查看文件内容后请求调用 Edit(test.txt)
                     case 2 -> sseResponse(toolCallChunk("call-edit", "edit",
                             "{\"path\":\"test.txt\",\"old_string\":\"hello world\",\"new_string\":\"hello BloomHarness\"}")
                             + finalChunk("tool_calls") + "data: [DONE]\n\n");
-                    // Turn 3: model completes with a final message
+                    // 第 3 轮:模型以最终消息完成
                     default -> sseResponse(contentChunk("Done: the file now says hello BloomHarness.")
                             + finalChunk("stop") + "data: [DONE]\n\n");
                 };
             }
         });
 
-        // 1. Create session through the PiServerService boundary
+        // 1. 通过 PiServerService 边界创建会话
         PiSessionRuntime runtime = service.createSession(CreateSessionOptions.builder()
                 .id("golden-path-001")
                 .cwd(workspace.toAbsolutePath().toString())
@@ -153,20 +153,20 @@ public class GoldenPathE2eTest {
                 .thinkingLevel(ThinkingLevel.OFF)
                 .build()).join();
 
-        // 2. Collect SSE progress events while prompting
+        // 2. 在提示词执行期间收集 SSE 进度事件
         List<TranscriptProgress> progressEvents = new CopyOnWriteArrayList<>();
         var subscription = broadcaster.subscribe("golden-path-001")
                 .doOnNext(progressEvents::add)
                 .subscribe();
         try {
-            // 3. Prompt: drives the full read -> edit -> final-message loop
+            // 3. 提示词:驱动完整的 read -> edit -> 最终消息 循环
             runtime.prompt("请读取 test.txt 并将其内容改写");
         } finally {
             subscription.dispose();
         }
 
-        // 4. Transcript persisted in SQLite: user, assistant(read), tool result,
-        //    assistant(edit), tool result, assistant(final text)
+        // 4. 对话记录已持久化到 SQLite:user、assistant(read)、tool result、
+        //    assistant(edit)、tool result、assistant(最终文本)
         List<AgentMessage> transcript = storage.getTranscript("golden-path-001");
         assertThat(transcript).hasSize(6);
         assertThat(transcript.get(0)).isInstanceOf(com.claubloom.harness.protocol.message.UserMessage.class);
@@ -196,11 +196,11 @@ public class GoldenPathE2eTest {
         assertThat(((TextContent) finalTurn.content().get(0)).text())
                 .contains("hello BloomHarness");
 
-        // 5. The file was actually rewritten by the sandboxed EditTool
+        // 5. 文件确实已被沙箱内的 EditTool 重写
         assertThat(Files.readString(workspace.resolve("test.txt")))
                 .isEqualTo("hello BloomHarness\n");
 
-        // 6. SSE stream saw the full event flow
+        // 6. SSE 事件流收到了完整的事件序列
         assertThat(progressEvents).isNotEmpty();
         assertThat(progressEvents.stream()
                 .anyMatch(p -> p instanceof TranscriptProgress.AssistantDelta))
@@ -210,7 +210,7 @@ public class GoldenPathE2eTest {
                         && item.item() instanceof ToolResultMessage))
                 .as("expected tool result item_finished events").isTrue();
 
-        // 7. Runtime phase returns to idle and the snapshot reflects the full transcript
+        // 7. 运行时阶段回到 idle,且快照包含完整的对话记录
         assertThat(runtime.getPhase()).isEqualTo(SessionPhase.IDLE);
         SessionSnapshot snapshot = runtime.snapshot();
         assertThat(snapshot.transcript()).hasSize(6);

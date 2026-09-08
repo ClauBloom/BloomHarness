@@ -4,7 +4,7 @@ import com.claubloom.harness.protocol.message.AgentMessage;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Event fired when an AgentMessage begins processing/streaming.
+ * 当 AgentMessage 开始处理/流式传输时触发的事件。
  */
 public record MessageStartEvent(
         @JsonProperty(value = "type", defaultValue = "message_start")

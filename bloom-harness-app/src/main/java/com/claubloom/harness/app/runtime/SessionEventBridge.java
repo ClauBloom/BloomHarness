@@ -71,8 +71,8 @@ public class SessionEventBridge implements AgentEventSink {
             persistence.append(sessionId, "tool_result", resultMessage);
             broadcaster.publish(sessionId, new TranscriptProgress.ItemFinished(resultMessage));
         } else if (event instanceof MessageEndEvent endEvent) {
-            // Message end for assistant items is covered by persistence above;
-            // tool results are persisted on their ToolResultEvent.
+            // 助手条目的消息结束已由上面的持久化逻辑覆盖;
+            // 工具结果则在各自的 ToolResultEvent 事件中持久化。
         }
     }
 

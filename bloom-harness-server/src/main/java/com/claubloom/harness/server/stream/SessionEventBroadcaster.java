@@ -4,16 +4,16 @@ import com.claubloom.harness.protocol.stream.TranscriptProgress;
 import reactor.core.publisher.Flux;
 
 /**
- * Publishes per-session transcript progress to streaming consumers (SSE).
- * Mirrors pi's runtime progress events (session_progress) exposed through an
- * HTTP-friendly channel for TC-P4-03 streaming passthrough.
+ * 将会话的对话记录进度发布给流式消费者（SSE）。
+ * 对齐 pi 的运行时进度事件（session_progress），通过面向 HTTP 的
+ * 通道对外暴露，用于 TC-P4-03 流式透传。
  */
 public interface SessionEventBroadcaster {
 
-    /** Subscribes to progress for one session; completes when the run ends. */
+    /** 订阅单个会话的进度；运行结束时完成。 */
     Flux<TranscriptProgress> subscribe(String sessionId);
 
-    /** Publishes one progress item for a session. */
+    /** 为某个会话发布一条进度项。 */
     void publish(String sessionId, TranscriptProgress progress);
 
     /** 完成（并移除）会话的事件流，标记任务执行结束。 */

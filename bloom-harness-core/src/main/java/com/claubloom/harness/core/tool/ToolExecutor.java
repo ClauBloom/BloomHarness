@@ -91,7 +91,7 @@ public class ToolExecutor {
     }
 
     /**
-     * Execute a single tool call with event notifications.
+     * 执行单个工具调用并发出事件通知。
      */
     public CompletableFuture<ToolResultMessage> executeSingleCall(ToolCall call, ToolContext toolContext) {
         return CompletableFuture.supplyAsync(() -> {

@@ -7,9 +7,9 @@ import java.util.Deque;
 import java.util.List;
 
 /**
- * Incrementally splits arbitrary byte chunks into length-prefixed payloads.
- * Faithful port of pi's FrameDecoder in protocol/src/framing.ts
- * (header accumulation, payload block buffering, open/ended/failed state machine).
+ * 将任意字节块增量拆分为带长度前缀的负载。
+ * 忠实移植自 pi 的 protocol/src/framing.ts 中的 FrameDecoder
+ * (头部累积、负载块缓冲、open/ended/failed 状态机)。
  */
 public final class FrameDecoder {
 

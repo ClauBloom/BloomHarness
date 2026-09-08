@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Thinking message content item (CoT).
+ * 思考消息内容条目(CoT)。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ThinkingContent(

@@ -17,8 +17,8 @@ import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Publishes revision-stamped server snapshots to every ready connection, serializing broadcasts.
- * Faithful port of pi's ServerSnapshotPublisher in packages/server/src/snapshots.ts.
+ * 向每条就绪连接发布带修订号的服务端快照，并将广播序列化。
+ * 忠实移植 pi 在 packages/server/src/snapshots.ts 中的 ServerSnapshotPublisher。
  */
 @Slf4j
 public class ServerSnapshotPublisher {
@@ -69,7 +69,7 @@ public class ServerSnapshotPublisher {
                                 resolvedModels)));
     }
 
-    /** Queues a serialized broadcast; mirrors pi's promise-chained broadcast queue. */
+    /** 排队执行一次序列化广播；对齐 pi 基于 promise 链的广播队列。 */
     public CompletableFuture<Void> broadcast() {
         CompletableFuture<Void> broadcast = broadcastQueue.get()
                 .thenCompose(v -> performBroadcast())

@@ -22,8 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Durable-session service backed by SQLite storage and the AgentLoop runtime.
- * Mirrors pi's PiServerService boundary (listSessions/listModels/createSession/openSession).
+ * 基于 SQLite 存储与 AgentLoop 运行时的持久会话服务。
+ * 对应 pi 的 PiServerService 边界(listSessions/listModels/createSession/openSession)。
  */
 @Slf4j
 @Component

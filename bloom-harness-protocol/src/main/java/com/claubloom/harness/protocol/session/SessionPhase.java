@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Session execution phase enumeration.
+ * 会话执行阶段枚举。
  */
 public enum SessionPhase {
     IDLE("idle"),

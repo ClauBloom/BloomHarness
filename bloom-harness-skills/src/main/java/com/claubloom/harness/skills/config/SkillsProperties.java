@@ -14,22 +14,22 @@ import java.util.List;
 public class SkillsProperties {
 
     /**
-     * Whether skill scanning and injection is enabled.
+     * 是否启用技能扫描与注入。
      */
     private boolean enabled = true;
 
     /**
-     * Project skills directory relative to workspace root (e.g. ".bloom/skills" or "skills").
+     * 项目技能目录（相对于工作区根目录，例如 ".bloom/skills" 或 "skills"）。
      */
     private String projectSkillsDir = ".bloom/skills";
 
     /**
-     * Global user skills directory (e.g. "~/.bloom/skills").
+     * 全局用户技能目录（例如 "~/.bloom/skills"）。
      */
     private String userSkillsDir = System.getProperty("user.home") + "/.bloom/skills";
 
     /**
-     * Extra custom skill directories to scan.
+     * 需要扫描的额外自定义技能目录。
      */
     private List<String> extraDirs = new ArrayList<>();
 }

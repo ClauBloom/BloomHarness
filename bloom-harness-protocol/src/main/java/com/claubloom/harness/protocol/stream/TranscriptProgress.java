@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
- * Normalized incremental activity for transcript progress events.
+ * 对话记录进度事件的规范化增量活动。
  */
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

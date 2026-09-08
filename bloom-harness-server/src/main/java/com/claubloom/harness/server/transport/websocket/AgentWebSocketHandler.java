@@ -14,9 +14,9 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 /**
- * WebSocket endpoint carrying the framed pi protocol over /ws/agent.
- * Mirrors pi's ByteConnectionAcceptor wiring in packages/server/src/listener.ts,
- * adapted to Spring's WebSocket transport as required by TEST.md TC-P4-02.
+ * 通过 /ws/agent 承载分帧 pi 协议的 WebSocket 端点。
+ * 对齐 pi 在 packages/server/src/listener.ts 中的 ByteConnectionAcceptor 装配，
+ * 按 TEST.md TC-P4-02 的要求适配到 Spring 的 WebSocket 传输。
  */
 @Slf4j
 @RequiredArgsConstructor

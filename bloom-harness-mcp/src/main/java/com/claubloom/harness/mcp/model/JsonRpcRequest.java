@@ -7,7 +7,7 @@ import lombok.Builder;
 import java.util.Map;
 
 /**
- * JSON-RPC 2.0 Request message.
+ * JSON-RPC 2.0 请求消息。
  */
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)

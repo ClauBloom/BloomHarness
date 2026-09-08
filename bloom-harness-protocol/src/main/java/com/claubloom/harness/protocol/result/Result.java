@@ -7,9 +7,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Functional Result container representing either success (Ok) or failure (Err).
+ * 函数式 Result 容器,表示成功 (Ok) 或失败 (Err)。
  *
- * @param <T> value type
+ * @param <T> 值类型
  */
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
