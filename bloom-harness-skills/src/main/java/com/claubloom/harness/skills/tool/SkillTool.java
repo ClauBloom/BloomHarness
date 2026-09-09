@@ -52,7 +52,9 @@ public class SkillTool implements ToolDefinition {
 
     @Override
     public String description() {
-        return "Load the full instructions for an available skill. Call this with the exact skill name when a task matches that skill.";
+        return "Load the complete procedural instructions and workflow for an available skill. " +
+                "Call this tool with the exact skill name whenever an active user task matches a skill listed in <available_skills>. " +
+                "Returns the skill documentation, base directory, and execution rules.";
     }
 
     @Override
@@ -60,7 +62,7 @@ public class SkillTool implements ToolDefinition {
         return Map.of(
                 "type", "object",
                 "properties", Map.of(
-                        "name", Map.of("type", "string", "description", "The exact name of the skill to load")
+                        "name", Map.of("type", "string", "description", "The exact name of the skill to load as listed in <available_skills>")
                 ),
                 "required", List.of("name")
         );

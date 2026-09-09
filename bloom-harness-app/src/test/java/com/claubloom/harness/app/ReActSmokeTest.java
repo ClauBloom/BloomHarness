@@ -26,15 +26,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -42,14 +41,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 验证完整 ReAct 自主循环的冒烟测试:
  * 1. LLM 请求携带 OpenAI 'tools' 结构。
  * 2. LLM 以对 'write' 的工具调用作为响应。
- * 3. ToolExecutor 在 /home/clau/codes/test/ 内执行 write 工具。
+ * 3. ToolExecutor 在测试临时目录内执行 write 工具。
  * 4. HelloWorld.cpp 成功创建于磁盘上。
  * 5. 工具结果回填到 Agent 上下文,LLM 产出最终回答。
  */
 @SpringBootTest(classes = BloomHarnessApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class ReActSmokeTest {
-
-    private static final String TEST_DIR = "/home/clau/codes/test";
 
     @Autowired
     private PiServerService service;
@@ -62,6 +59,9 @@ public class ReActSmokeTest {
 
     private MockWebServer llmServer;
 
+    @TempDir
+    Path workspace;
+
     @DynamicPropertySource
     static void registerStorageProperties(DynamicPropertyRegistry registry) {
         String dbPath = System.getProperty("java.io.tmpdir") + "/react-smoke-test-" + System.nanoTime() + ".db";
@@ -73,12 +73,8 @@ public class ReActSmokeTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // 确保测试目录存在,并清理之前的 HelloWorld.cpp
-        File testDir = new File(TEST_DIR);
-        if (!testDir.exists()) {
-            testDir.mkdirs();
-        }
-        Files.deleteIfExists(Paths.get(TEST_DIR, "HelloWorld.cpp"));
+        // @TempDir 自动创建测试目录(JUnit5 生命周期管理),清理之前的 HelloWorld.cpp
+        Files.deleteIfExists(workspace.resolve("HelloWorld.cpp"));
 
         llmServer = new MockWebServer();
         llmServer.start();
@@ -126,7 +122,7 @@ public class ReActSmokeTest {
 
     @Test
     @Timeout(60)
-    @DisplayName("ReAct Smoke Test: Agent autonomously invokes write tool to create /home/clau/codes/test/HelloWorld.cpp and finishes turn")
+    @DisplayName("ReAct Smoke Test: Agent autonomously invokes write tool to create workspace temp dir/HelloWorld.cpp and finishes turn")
     void testReActAgentWritesHelloWorldCpp() throws Exception {
         AtomicInteger callCount = new AtomicInteger(0);
 
@@ -168,12 +164,12 @@ public class ReActSmokeTest {
             }
         });
 
-        // 1. 以 CWD = /home/clau/codes/test/ 创建会话
+        // 1. 以测试临时目录为 CWD 创建会话
         String sessionId = "react-smoke-" + System.currentTimeMillis();
         PiSessionRuntime runtime = service.createSession(CreateSessionOptions.builder()
                 .id(sessionId)
                 .name("ReAct Smoke Test Session")
-                .cwd(TEST_DIR)
+                .cwd(workspace.toAbsolutePath().toString())
                 .model(ModelRef.of("openai", "gpt-4o"))
                 .thinkingLevel(ThinkingLevel.OFF)
                 .build()).join();
@@ -189,10 +185,10 @@ public class ReActSmokeTest {
         }
 
         // 4. 验证 HelloWorld.cpp 确实存在于磁盘上!
-        Path targetFile = Paths.get(TEST_DIR, "HelloWorld.cpp");
+        Path targetFile = workspace.resolve("HelloWorld.cpp");
         assertThat(Files.exists(targetFile))
                 .as("HelloWorld.cpp should be created on disk by ToolExecutor in %s, tool result was: %s",
-                        TEST_DIR, transcript.size() > 2 ? transcript.get(2) : "none")
+                        workspace.toAbsolutePath(), transcript.size() > 2 ? transcript.get(2) : "none")
                 .isTrue();
         assertThat(transcript).hasSize(4);
 
