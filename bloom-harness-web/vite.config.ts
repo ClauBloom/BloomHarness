@@ -10,12 +10,9 @@ export default defineConfig(({ mode }) => {
     '/api': {
       target: backendTarget,
       changeOrigin: true,
-      configure: (proxy: any) => {
-        proxy.on('error', (err: any, req: any) => {
-          console.error(`[Vite Proxy Error] ${req.method} ${req.url} -> ${backendTarget}:`, err.message);
-        });
-        proxy.on('proxyReq', (proxyReq: any, req: any) => {
-          console.log(`[Vite Proxy] Forwarding: ${req.method} ${req.url} -> ${backendTarget}${req.url}`);
+      configure: (proxy: { on: (event: string, handler: (...args: any[]) => void) => void }) => {
+        proxy.on('error', (err: Error, req: { method?: string; url?: string }) => {
+          console.error(`[Vite Proxy Error] ${req.method || 'REQ'} ${req.url || ''} -> ${backendTarget}:`, err.message);
         });
       },
     },
@@ -23,8 +20,8 @@ export default defineConfig(({ mode }) => {
       target: backendTarget.replace(/^http/, 'ws'),
       ws: true,
       changeOrigin: true,
-      configure: (proxy: any) => {
-        proxy.on('error', (err: any) => {
+      configure: (proxy: { on: (event: string, handler: (...args: any[]) => void) => void }) => {
+        proxy.on('error', (err: Error) => {
           console.error('[Vite WS Proxy Error]:', err.message);
         });
       },
@@ -45,6 +42,30 @@ export default defineConfig(({ mode }) => {
     preview: {
       port: 5173,
       proxy: proxyConfig,
+    },
+    build: {
+      chunkSizeWarningLimit: 800,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes('node_modules')) {
+              if (id.includes('vue') || id.includes('pinia')) {
+                return 'vendor-vue';
+              }
+              if (id.includes('lucide-vue-next')) {
+                return 'vendor-icons';
+              }
+              if (id.includes('marked') || id.includes('dompurify')) {
+                return 'vendor-markdown';
+              }
+              // Keep @shikijs/langs dynamic chunks independent; bundle only shiki core engine
+              if (id.includes('node_modules/shiki/') || id.includes('node_modules/@shikijs/core')) {
+                return 'vendor-shiki-core';
+              }
+            }
+          },
+        },
+      },
     },
   };
 });

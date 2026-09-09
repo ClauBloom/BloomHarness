@@ -1,0 +1,112 @@
+/* Base variables referenced by the token sheets and component CSS (ported from
+ * dsh ui-theme/base.css + web/base.css). Code font stack deliberately omits a
+ * bare `monospace` tail (Windows CJK falls back to SimSun otherwise). */
+:root {
+  --dsw-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ds-font-family-code: 'SF Mono', 'JetBrains Mono', 'Fira Code', Consolas,
+    'Liberation Mono', Menlo, Courier, 'PingFang SC', 'Microsoft YaHei';
+  --ds-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ds-transition-duration: 0.2s;
+  --ds-transition-duration-fast: 0.1s;
+  --ds-transition-duration-slow: 0.3s;
+}
+
+/* Shell-owned mount defaults. Tailwind preflight is disabled (tailwind.config.js),
+ * so this is the only reset: the same minimal one the dsh shell relies on. */
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+html {
+  line-height: normal;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--dsw-font-family);
+  font-size: 14px;
+  /* Grayscale antialiasing over subpixel rendering. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--dsw-alias-label-primary, #0f1115);
+  background: var(--dsw-alias-bg-base, #fff);
+  overflow: hidden;
+  /* Supporting browsers insert CJK/Latin spacing in inherited prose. */
+  text-autospace: normal;
+}
+
+code,
+pre,
+[data-diff],
+[data-read],
+[data-search],
+[data-terminal] {
+  /* Literal payloads retain source spacing and column alignment. */
+  text-autospace: no-autospace;
+}
+
+/* Form controls don't inherit the body font (UA sheets pin their families),
+   so the app stack is re-applied to them explicitly. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+button {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+svg {
+  flex: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Accessible hide used across ported components. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
