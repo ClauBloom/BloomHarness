@@ -1,53 +1,61 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import SessionSelector from '@/components/SessionSelector.vue';
-import ChatPanel from '@/components/ChatPanel.vue';
-import SettingsModal from '@/components/SettingsModal.vue';
-import WorkspaceModal from '@/components/WorkspaceModal.vue';
+import { onBeforeUnmount, onMounted, watch } from 'vue';
 import { useAgentStore } from '@/stores/agentStore';
 import { useSession } from '@/composables/useSession';
+import { useWorkspace } from '@/composables/useWorkspace';
+import AppFrame from '@/components/layout/AppFrame.vue';
+import SidebarRoot from '@/components/layout/SidebarRoot.vue';
+import ConversationRoot from '@/components/conversation/ConversationRoot.vue';
+import SettingsPanel from '@/components/settings/SettingsPanel.vue';
+import DirectoryBrowserModal from '@/components/workspace/DirectoryBrowserModal.vue';
+import DsToastHost from '@/components/primitives/DsToastHost.vue';
 
 const store = useAgentStore();
-const { createSession, updateSessionCwd, selectSession } = useSession();
+const { fetchSessions, startBlankSession, selectSession } = useSession();
+const { loadWorkspaceInfo } = useWorkspace();
 
-const showSettings = ref(false);
-const showWorkspaceModal = ref(false);
-
-async function handleSelectWorkspace(path: string, createNewSession: boolean) {
-  if (createNewSession || !store.currentSessionId) {
-    const dirName = path.split('/').filter(Boolean).pop() || '工作区';
-    await createSession(`${dirName} 会话`, path);
-  } else {
-    await updateSessionCwd(store.currentSessionId, path);
-    if (store.currentSessionId) {
-      await selectSession(store.currentSessionId);
-    }
-  }
+// Refresh the session list when the window regains focus (replaces the manual refresh button).
+function onFocus() {
+  if (document.visibilityState === 'visible') void fetchSessions();
 }
+
+// The current session lives in the URL (`?session=<id>`) so a reload lands on the same conversation.
+watch(
+  () => store.currentSessionId,
+  (id) => {
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set('session', id);
+    else url.searchParams.delete('session');
+    window.history.replaceState(null, '', url);
+  },
+);
+
+onMounted(async () => {
+  void loadWorkspaceInfo();
+  const list = await fetchSessions();
+  const requested = new URLSearchParams(window.location.search).get('session');
+  if (requested && list.some((s) => s.id === requested)) {
+    await selectSession(requested);
+  }
+  // Otherwise land on the blank hero (dsh "New Session") rather than auto-creating a session.
+  if (!store.currentSessionId) await startBlankSession();
+  window.addEventListener('focus', onFocus);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('focus', onFocus);
+});
 </script>
 
 <template>
-  <div class="flex h-screen w-screen overflow-hidden bg-gray-950 font-sans">
-    <SessionSelector 
-      @open-settings="showSettings = true" 
-      @open-workspace="showWorkspaceModal = true" 
-    />
-    <div class="flex-1 flex flex-col min-w-0">
-      <ChatPanel 
-        @open-settings="showSettings = true" 
-        @open-workspace="showWorkspaceModal = true" 
-      />
-    </div>
+  <AppFrame>
+    <template #sidebar="{ collapsed, width }">
+      <SidebarRoot :collapsed="collapsed" :width="width" />
+    </template>
+    <ConversationRoot />
+  </AppFrame>
 
-    <!-- AI Router 设置弹窗 -->
-    <SettingsModal v-if="showSettings" @close="showSettings = false" />
-
-    <!-- 工作区选择弹窗 -->
-    <WorkspaceModal 
-      v-if="showWorkspaceModal" 
-      :current-cwd="store.currentSession?.cwd"
-      @close="showWorkspaceModal = false"
-      @select-workspace="handleSelectWorkspace"
-    />
-  </div>
+  <SettingsPanel />
+  <DirectoryBrowserModal />
+  <DsToastHost />
 </template>

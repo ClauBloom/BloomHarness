@@ -2,11 +2,37 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BloomHarness - AI Agent WebUI</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>BloomHarness</title>
   </head>
-  <body class="bg-gray-950 text-gray-100 antialiased overflow-hidden">
+  <body>
+    <script>
+      // Theme bootstrap: mirrors src/theme/useTheme.ts so the first paint has no flash.
+      (function () {
+        var preference = 'system';
+        var fontSize = 14;
+        try {
+          var raw = localStorage.getItem('bloom.ui-theme');
+          if (raw) {
+            var saved = JSON.parse(raw);
+            if (saved && (saved.preference === 'light' || saved.preference === 'dark' || saved.preference === 'system')) {
+              preference = saved.preference;
+            }
+            if (saved && typeof saved.fontSize === 'number') {
+              fontSize = Math.min(17, Math.max(12, Math.round(saved.fontSize)));
+            }
+          }
+        } catch (e) {}
+        var systemDark = preference === 'system'
+          && typeof matchMedia !== 'undefined'
+          && matchMedia('(prefers-color-scheme: dark)').matches;
+        var dark = preference === 'dark' || systemDark;
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        document.body.toggleAttribute('data-ds-dark-theme', dark);
+        document.body.style.setProperty('--dsh-content-font-size', fontSize + 'px');
+      })();
+    </script>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

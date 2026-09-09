@@ -1,0 +1,53 @@
+/**
+ * dsh `Icon*` glyph → lucide-vue-next mapping. Every icon rides `currentColor`;
+ * sizes follow the dsh rhythm (16 wide sidebar / 18 collapsed rail / 14 inside
+ * 28px chips). Stroke width 1.5 approximates dsh's ≈1.3px flattened outlines.
+ */
+export {
+  PanelLeft as IconPanelLeft,
+  MessageCirclePlus as IconNewChat,
+  Search as IconSearch,
+  X as IconClose,
+  SlidersHorizontal as IconViewOptions,
+  FolderPlus as IconProjectAdd,
+  Folder as IconFolderClose,
+  FolderOpen as IconFolderOpen,
+  Play as IconTriangleRight,
+  Ellipsis as IconEllipsis,
+  Plus as IconPlus,
+  Pencil as IconEdit,
+  Trash2 as IconTrash,
+  Archive as IconArchive,
+  ArchiveRestore as IconUnarchive,
+  GripVertical as IconDragHandle,
+  Check as IconCheck,
+  ChevronDown as IconChevronDown,
+  ChevronRight as IconChevronRight,
+  ChevronUp as IconChevronUp,
+  ChevronLeft as IconChevronLeft,
+  CircleAlert as IconWarning,
+  Settings as IconSettings,
+  Database as IconData,
+  Copy as IconCopy,
+  Paperclip as IconPaperclip,
+  Sun as IconLight,
+  Moon as IconDark,
+  Monitor as IconFollowSystem,
+  SquareTerminal as IconBash,
+  FileText as IconRead,
+  FilePen as IconEditFile,
+  BookOpen as IconSkill,
+  Sparkles as IconSparkle,
+  Brain as IconThink,
+  Clock as IconClock,
+  ArrowUp as IconArrowUp,
+  Flower2 as IconBrand,
+  Eye as IconEye,
+  EyeOff as IconEyeOff,
+  Zap as IconZap,
+  RefreshCw as IconRefresh,
+  Globe as IconGlobe,
+  Terminal as IconTerminal,
+} from 'lucide-vue-next';
+
+export const ICON_STROKE = 1.5;

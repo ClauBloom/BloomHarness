@@ -1,20 +1,17 @@
 /** @type {import('tailwindcss').Config} */
+// Tailwind is used for layout utilities only (flex/grid/gap/spacing/overflow/position).
+// Colors, typography, radii, borders, shadows and motion come from the dsh design tokens
+// in src/styles/*.css and each component's scoped CSS.
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}",
+    "./src/**/*.{vue,ts}",
   ],
+  corePlugins: {
+    preflight: false,
+  },
   theme: {
-    extend: {
-      colors: {
-        brand: {
-          50: '#f5f3ff',
-          500: '#8b5cf6',
-          600: '#7c3aed',
-          700: '#6d28d9',
-        }
-      }
-    },
+    extend: {},
   },
   plugins: [],
 }

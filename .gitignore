@@ -60,6 +60,8 @@ providers.json
 # --------------------------------------------------------------------
 **/node_modules/
 bloom-harness-web/dist/
+# vue-tsc 绝不应在源码目录旁产生编译产物（tsconfig 已设置 noEmit）；防止散落的 .js 文件污染源码目录
+bloom-harness-web/src/**/*.js
 bloom-harness-web/.turbo/
 bloom-harness-web/.eslintcache
 bloom-harness-web/.stylelintcache

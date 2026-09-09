@@ -1,4 +1,4 @@
-export type ThinkingLevel = 'off' | 'low' | 'medium' | 'high' | 'max';
+export type ThinkingLevel = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
 export interface ModelRef {
   provider: string;
@@ -13,6 +13,7 @@ export interface TextContent {
 export interface ThinkingContent {
   type: 'thinking';
   thinking: string;
+  redacted?: boolean;
 }
 
 export interface ToolCallContent {
@@ -22,7 +23,32 @@ export interface ToolCallContent {
   input: Record<string, any>;
 }
 
-export type MessageContent = TextContent | ThinkingContent | ToolCallContent;
+export interface ImageContent {
+  type: 'image';
+  /** Base64 payload. */
+  data: string;
+  mimeType: string;
+}
+
+export type MessageContent = TextContent | ThinkingContent | ToolCallContent | ImageContent;
+
+export interface UsageCost {
+  input: number;
+  output: number;
+  cacheRead: number;
+  cacheWrite: number;
+  total: number;
+}
+
+export interface Usage {
+  input: number;
+  output: number;
+  cacheRead: number;
+  cacheWrite: number;
+  reasoning?: number;
+  totalTokens: number;
+  cost?: UsageCost;
+}
 
 export interface UserMessage {
   id: string;
@@ -37,6 +63,7 @@ export interface AssistantMessage {
   content: MessageContent[];
   model?: ModelRef;
   responseModel?: string;
+  usage?: Usage;
   timestamp: number;
   status: 'streaming' | 'complete' | 'error' | 'aborted';
   stopReason?: 'stop' | 'length' | 'toolUse' | 'error' | 'aborted';
@@ -51,14 +78,15 @@ export interface ToolResultMessage {
   input?: any;
   content: MessageContent[];
   details?: any;
+  usage?: Usage;
   timestamp: number;
-  status: 'complete' | 'error';
+  status: 'running' | 'complete' | 'error';
   isError: boolean;
 }
 
 export type AgentMessage = UserMessage | AssistantMessage | ToolResultMessage;
 
-export type TranscriptProgress = 
+export type TranscriptProgress =
   | { type: 'item_started'; item: AgentMessage }
   | { type: 'assistant_delta'; messageId: string; contentIndex: number; kind: 'text' | 'thinking' | 'toolCall'; delta: string }
   | { type: 'item_updated'; item: AgentMessage }
