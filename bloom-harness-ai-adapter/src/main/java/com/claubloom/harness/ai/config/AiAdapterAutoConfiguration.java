@@ -1,8 +1,9 @@
 package com.claubloom.harness.ai.config;
 
-import com.claubloom.harness.ai.adapter.AiModelAdapter;
-import com.claubloom.harness.ai.adapter.StreamAdapter;
+import com.claubloom.harness.ai.adapter.SpringAiModelAdapter;
 import com.claubloom.harness.ai.provider.ProviderRegistry;
+import com.claubloom.harness.ai.router.RouterEngineConfiguration;
+import com.claubloom.harness.core.loop.LlmCaller;
 import com.miniapi.router.core.protocol.ProtocolRegistry;
 import com.miniapi.router.core.protocol.ReasoningContentCache;
 import com.miniapi.router.core.protocol.converter.RequestConverter;
@@ -14,18 +15,24 @@ import com.miniapi.router.core.protocol.converter.anthropic.AnthropicStreamConve
 import com.miniapi.router.core.protocol.converter.openai.OpenAIRequestConverter;
 import com.miniapi.router.core.protocol.converter.openai.OpenAIResponseConverter;
 import com.miniapi.router.core.protocol.converter.openai.OpenAIStreamConverter;
-import com.miniapi.router.core.streaming.UpstreamStreamClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 
 import java.util.List;
 
 /**
  * bloom-harness-ai-adapter 模块的 Spring Boot 自动装配类。
+ * <p>
+ * 模型调用链路已整体迁移至 ai-router-core Spring AI 桥接层：
+ * 本类仅装配协议转换器（openai/anthropic）、ProviderRegistry 与 {@link SpringAiModelAdapter}；
+ * 路由引擎（RoutePipeline/DefaultRouterCore/ChatModelRouter）由
+ * {@link RouterEngineConfiguration} 装配。
  */
 @AutoConfiguration
+@Import(RouterEngineConfiguration.class)
 @EnableConfigurationProperties(AiProperties.class)
 public class AiAdapterAutoConfiguration {
 
@@ -88,25 +95,11 @@ public class AiAdapterAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    public StreamAdapter streamAdapter() {
-        return new StreamAdapter();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public UpstreamStreamClient upstreamStreamClient() {
-        return new UpstreamStreamClient();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public AiModelAdapter aiModelAdapter(
-            ProtocolRegistry protocolRegistry,
-            ProviderRegistry providerRegistry,
-            StreamAdapter streamAdapter,
-            UpstreamStreamClient upstreamStreamClient
+    @ConditionalOnMissingBean(LlmCaller.class)
+    public SpringAiModelAdapter springAiModelAdapter(
+            com.miniapi.router.core.springai.ChatModelRouter chatModelRouter,
+            ProviderRegistry providerRegistry
     ) {
-        return new AiModelAdapter(protocolRegistry, providerRegistry, streamAdapter, upstreamStreamClient);
+        return new SpringAiModelAdapter(chatModelRouter, providerRegistry);
     }
 }

@@ -24,10 +24,16 @@
             <artifactId>bloom-harness-core</artifactId>
         </dependency>
 
-        <!-- MiniAPIRouter Core SDK -->
+        <!-- MiniAPIRouter Core SDK：多供应商路由、协议转换、故障回退与 Spring AI ChatModel 桥接 -->
         <dependency>
             <groupId>com.miniapi</groupId>
             <artifactId>ai-router-core</artifactId>
+        </dependency>
+
+        <!-- Spring AI Model：ChatModel / Prompt / ToolCallingChatOptions 标准抽象 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-model</artifactId>
         </dependency>
 
         <dependency>

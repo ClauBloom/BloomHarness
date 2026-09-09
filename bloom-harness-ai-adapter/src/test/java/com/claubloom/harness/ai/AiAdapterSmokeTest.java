@@ -1,323 +1,321 @@
 package com.claubloom.harness.ai;
 
-import com.claubloom.harness.ai.adapter.StreamAdapter;
+import com.claubloom.harness.ai.adapter.SpringAiModelAdapter;
+import com.claubloom.harness.ai.provider.ProviderConfig;
+import com.claubloom.harness.ai.provider.ProviderRegistry;
+import com.claubloom.harness.ai.router.RouterEngineConfiguration;
+import com.claubloom.harness.core.event.AgentEvent;
+import com.claubloom.harness.core.event.MessageUpdateEvent;
+import com.claubloom.harness.core.loop.AgentContext;
+import com.claubloom.harness.core.loop.AgentLoopConfig;
+import com.claubloom.harness.core.tool.ToolContext;
+import com.claubloom.harness.protocol.content.ImageContent;
+import com.claubloom.harness.protocol.content.TextContent;
+import com.claubloom.harness.protocol.content.ThinkingContent;
+import com.claubloom.harness.protocol.content.ToolCallContent;
+import com.claubloom.harness.protocol.message.AssistantMessage;
+import com.claubloom.harness.protocol.message.ToolResultMessage;
+import com.claubloom.harness.protocol.message.UserMessage;
 import com.claubloom.harness.protocol.model.ModelRef;
+import com.claubloom.harness.protocol.session.Usage;
+import com.claubloom.harness.protocol.tool.ToolResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.miniapi.router.core.api.RouterCore;
 import com.miniapi.router.core.protocol.ProtocolRegistry;
 import com.miniapi.router.core.protocol.ReasoningContentCache;
-import com.miniapi.router.core.protocol.UnifiedRequest;
-import com.miniapi.router.core.protocol.UnifiedStreamChunk;
 import com.miniapi.router.core.protocol.converter.anthropic.AnthropicRequestConverter;
 import com.miniapi.router.core.protocol.converter.anthropic.AnthropicResponseConverter;
 import com.miniapi.router.core.protocol.converter.anthropic.AnthropicStreamConverter;
 import com.miniapi.router.core.protocol.converter.openai.OpenAIRequestConverter;
 import com.miniapi.router.core.protocol.converter.openai.OpenAIResponseConverter;
 import com.miniapi.router.core.protocol.converter.openai.OpenAIStreamConverter;
+import com.miniapi.router.core.routing.RoutePipeline;
+import com.miniapi.router.core.streaming.StreamProxy;
+import com.miniapi.router.core.springai.ChatModelRouter;
+import com.miniapi.router.core.spi.ApiKeyConfigRepository;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 阶段 2：AI 模型适配器冒烟测试（TC-P2-01、TC-P2-02）。
+ * AI 适配器冒烟测试（ai-router-core Spring AI 桥接层）。
+ * <p>
+ * 覆盖：协议消息 → Spring AI 消息映射；MockWebServer 端到端流式
+ * （reasoning_content + 文本 + tool_calls delta）；错误诊断卡片映射；
+ * 以及关键约束 —— ChatModel 内部不执行工具（ReAct 循环由 AgentLoop 掌控）。
  */
-public class AiAdapterSmokeTest {
+class AiAdapterSmokeTest {
 
-    private ProtocolRegistry protocolRegistry;
-    private StreamAdapter streamAdapter;
+    private MockWebServer upstream;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private SpringAiModelAdapter adapter;
+
+    @AfterEach
+    void stopUpstream() throws IOException {
+        if (upstream != null) {
+            upstream.shutdown();
+        }
+    }
 
     @BeforeEach
-    void setUp() {
-        var openAiReq = new OpenAIRequestConverter(new ReasoningContentCache());
-        var openAiResp = new OpenAIResponseConverter();
-        var openAiStream = new OpenAIStreamConverter();
+    void setUp() throws IOException {
+        upstream = new MockWebServer();
+        upstream.start();
+        ProviderRegistry registry = new ProviderRegistry();
+        registry.register(new ProviderConfig("test", "Test Provider",
+                upstream.url("/").toString(), "test-key", "openai", List.of("test-model")));
 
-        var anthropicReq = new AnthropicRequestConverter();
-        var anthropicResp = new AnthropicResponseConverter();
-        var anthropicStream = new AnthropicStreamConverter();
-
-        protocolRegistry = new ProtocolRegistry(
+        ReasoningContentCache reasoningCache = new ReasoningContentCache();
+        OpenAIRequestConverter openAiReq = new OpenAIRequestConverter(reasoningCache);
+        OpenAIResponseConverter openAiResp = new OpenAIResponseConverter();
+        OpenAIStreamConverter openAiStream = new OpenAIStreamConverter();
+        AnthropicRequestConverter anthropicReq = new AnthropicRequestConverter();
+        AnthropicResponseConverter anthropicResp = new AnthropicResponseConverter();
+        AnthropicStreamConverter anthropicStream = new AnthropicStreamConverter();
+        ProtocolRegistry protocolRegistry = new ProtocolRegistry(
                 List.of(openAiReq, anthropicReq),
                 List.of(openAiResp, anthropicResp),
-                List.of(openAiStream, anthropicStream)
-        );
+                List.of(openAiStream, anthropicStream));
 
-        streamAdapter = new StreamAdapter();
+        RouterEngineConfiguration engine = new RouterEngineConfiguration();
+        ApiKeyConfigRepository keyRepository = engine.bloomApiKeyConfigRepository(registry);
+        var ruleRepository = engine.bloomRouteRuleRepository();
+        var modelRepository = engine.bloomModelConfigRepository();
+        var intentCatalog = engine.bloomIntentCatalogProvider();
+        var upstreamClient = engine.upstreamClient();
+        var cooldownTracker = engine.upstreamCooldownTracker();
+
+        RoutePipeline routePipeline = engine.routePipeline(ruleRepository, keyRepository,
+                engine.intentEvaluator(upstreamClient, engine.intentPromptTemplate(), intentCatalog, modelRepository),
+                intentCatalog, engine.failureTracker(), engine.sessionRouteMemory(),
+                modelRepository, engine.routeStrategyRegistry(), cooldownTracker);
+        StreamProxy streamProxy = engine.streamProxy(upstreamClient, protocolRegistry,
+                reasoningCache, engine.upstreamResponseParser(), cooldownTracker);
+        RouterCore routerCore = engine.routerCore(routePipeline, streamProxy, protocolRegistry);
+
+        var responseConverter = engine.springAiResponseConverter();
+        ChatModelRouter chatModelRouter = engine.chatModelRouter(routerCore, protocolRegistry,
+                engine.springAiPromptConverter(openAiReq), responseConverter,
+                engine.springAiStreamConverter(responseConverter));
+
+        adapter = new SpringAiModelAdapter(chatModelRouter, registry);
     }
 
     /**
-     * TC-P2-01：协议转换集成（OpenAI 与 Anthropic 格式）。
+     * TC-P2-01：协议消息应映射为 Spring AI 消息（系统提示词、多模态图片、工具调用与工具结果）。
      */
     @Test
-    @DisplayName("TC-P2-01: Should convert UnifiedRequest to both OpenAI and Anthropic format payloads")
-    void should_convertUnifiedRequest_to_openAiAndAnthropicPayloads() {
-        // 准备
-        var providerRegistry = new com.claubloom.harness.ai.provider.ProviderRegistry();
-        var adapter = new com.claubloom.harness.ai.adapter.AiModelAdapter(protocolRegistry, providerRegistry, streamAdapter);
+    @DisplayName("TC-P2-01: Should map protocol messages to Spring AI messages with tools and media")
+    void should_mapProtocolMessages_toSpringAiMessages() {
+        AssistantMessage assistant = AssistantMessage.complete("a-1",
+                List.of(new TextContent("我看一下"),
+                        new ToolCallContent("call-1", "read", Map.of("path", "README.md"))),
+                new ModelRef("test", "test-model"), "test-model", Usage.zero(),
+                System.currentTimeMillis(), "toolUse");
+        ToolResultMessage toolResult = new ToolResultMessage("t-1", "call-1", "read",
+                Map.of("path", "README.md"), List.of(new TextContent("file content")),
+                null, Usage.zero(), System.currentTimeMillis(), "complete", false);
 
-        var context = new com.claubloom.harness.core.loop.AgentContext();
-        context.getMessages().add(com.claubloom.harness.protocol.message.UserMessage.of("Please implement binary search in Java"));
-
-        var config = com.claubloom.harness.core.loop.AgentLoopConfig.builder()
-                .systemPrompt("You are an expert coder.")
-                .model(ModelRef.of("openai", "gpt-4o"))
+        AgentContext context = AgentContext.builder().sessionId("s1").cwd(".")
+                .messages(List.of(
+                        new UserMessage("u-1",
+                                List.of(new TextContent("看下这个图 "), new ImageContent("aGk=", "image/png")),
+                                System.currentTimeMillis()),
+                        assistant, toolResult))
+                .build();
+        AgentLoopConfig config = AgentLoopConfig.builder()
+                .model(new ModelRef("test", "test-model"))
+                .systemPrompt("你是测试助手")
                 .build();
 
-        // 执行 —— 通过 AiModelAdapter 为 OpenAI 转换
-        UnifiedRequest openAiUnifiedReq = adapter.toUnifiedRequest(context, config, ModelRef.of("openai", "gpt-4o"), "openai");
-        openAiUnifiedReq.setTemperature(0.7);
-        openAiUnifiedReq.setMaxTokens(2048);
-        openAiUnifiedReq.setTools(List.of(
-                Map.of("type", "function", "function", Map.of(
-                        "name", "read_file",
-                        "description", "Read a file from disk",
-                        "parameters", Map.of("type", "object", "properties", Map.of("path", Map.of("type", "string")))
-                ))
-        ));
+        var prompt = adapter.toSpringPrompt(context, config, new ModelRef("test", "test-model"));
 
-        var openAiConverter = protocolRegistry.getRequestConverter("openai");
-        Map<String, Object> openAiPayload = openAiConverter.buildUpstreamRequest(openAiUnifiedReq, "gpt-4o");
-
-        // 断言 OpenAI 格式
-        assertThat(openAiPayload).isNotNull();
-        assertThat(openAiPayload.get("model")).isEqualTo("gpt-4o");
-        assertThat(openAiPayload.get("temperature")).isEqualTo(0.7);
-        assertThat(openAiPayload.get("max_tokens")).isEqualTo(2048);
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> openAiMessages = (List<Map<String, Object>>) openAiPayload.get("messages");
-        assertThat(openAiMessages).isNotEmpty();
-        assertThat(openAiMessages.stream().anyMatch(m -> "system".equals(m.get("role")))).isTrue();
-        assertThat(openAiPayload).containsKey("tools");
-
-        // 执行 —— 通过 AiModelAdapter 为 Anthropic 转换
-        UnifiedRequest anthropicUnifiedReq = adapter.toUnifiedRequest(context, config, ModelRef.of("anthropic", "claude-3-5-sonnet-20241022"), "anthropic");
-        anthropicUnifiedReq.setTemperature(0.7);
-        anthropicUnifiedReq.setMaxTokens(2048);
-        anthropicUnifiedReq.setTools(openAiUnifiedReq.getTools());
-
-        var anthropicConverter = protocolRegistry.getRequestConverter("anthropic");
-        Map<String, Object> anthropicPayload = anthropicConverter.buildUpstreamRequest(anthropicUnifiedReq, "claude-3-5-sonnet-20241022");
-
-        // 断言 Anthropic 格式
-        assertThat(anthropicPayload).isNotNull();
-        assertThat(anthropicPayload.get("model")).isEqualTo("claude-3-5-sonnet-20241022");
-        assertThat(anthropicPayload.get("system")).isEqualTo("You are an expert coder.");
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> anthropicMessages = (List<Map<String, Object>>) anthropicPayload.get("messages");
-        assertThat(anthropicMessages).isNotEmpty();
-        assertThat(anthropicMessages.get(0).get("role")).isEqualTo("user");
-        assertThat(anthropicPayload).containsKey("tools");
+        // SystemMessage + UserMessage + AssistantMessage + ToolResponseMessage
+        assertThat(prompt.getInstructions()).hasSize(4);
+        assertThat(prompt.getInstructions().get(0))
+                .isInstanceOf(org.springframework.ai.chat.messages.SystemMessage.class);
+        org.springframework.ai.chat.messages.UserMessage userMessage =
+                (org.springframework.ai.chat.messages.UserMessage) prompt.getInstructions().get(1);
+        assertThat(userMessage.getText()).isEqualTo("看下这个图 ");
+        assertThat(userMessage.getMedia()).hasSize(1);
+        org.springframework.ai.chat.messages.AssistantMessage springAssistant =
+                (org.springframework.ai.chat.messages.AssistantMessage) prompt.getInstructions().get(2);
+        assertThat(springAssistant.getToolCalls()).hasSize(1);
+        assertThat(springAssistant.getToolCalls().get(0).id()).isEqualTo("call-1");
+        assertThat(springAssistant.getToolCalls().get(0).name()).isEqualTo("read");
+        org.springframework.ai.chat.messages.ToolResponseMessage toolResponse =
+                (org.springframework.ai.chat.messages.ToolResponseMessage) prompt.getInstructions().get(3);
+        assertThat(toolResponse.getResponses().get(0).id()).isEqualTo("call-1");
+        assertThat(toolResponse.getResponses().get(0).responseData()).isEqualTo("file content");
     }
 
     /**
-     * TC-P2-02：SSE 流式分片转发与 Token 累积。
+     * TC-P2-02：端到端流式（MockWebServer）—— reasoning_content 思考流、文本增量、
+     * tool_calls 增量聚合，且 ChatModel 内部不执行工具（仅一次上游请求）。
      */
     @Test
-    @DisplayName("TC-P2-02: Should parse SSE stream chunks and accumulate tokens and tool calls accurately")
-    void should_parseSseChunksAndAccumulateAssistantMessage() {
-        // 准备
-        String chunk1 = "data: {\"id\":\"chatcmpl-1\",\"model\":\"gpt-4o\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"Let me \"},\"finish_reason\":null}]}";
-        String chunk2 = "data: {\"id\":\"chatcmpl-1\",\"model\":\"gpt-4o\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"read the file.\"},\"finish_reason\":null}]}";
-        String chunk3 = "data: {\"id\":\"chatcmpl-1\",\"model\":\"gpt-4o\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_abc\",\"type\":\"function\",\"function\":{\"name\":\"read\",\"arguments\":\"{\\\"path\\\":\"}}]},\"finish_reason\":null}]}";
-        String chunk4 = "data: {\"id\":\"chatcmpl-1\",\"model\":\"gpt-4o\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"/test.txt\\\"}\"}}]},\"finish_reason\":\"tool_calls\"}]}";
-        String chunkDone = "data: [DONE]";
+    @DisplayName("TC-P2-02: Should stream reasoning/text/toolCalls and aggregate without internal tool execution")
+    void should_streamReasoningTextToolCall_andAggregateWithoutInternalToolExecution() throws Exception {
+        upstream.enqueue(new MockResponse()
+                .setHeader("Content-Type", "text/event-stream")
+                .setBody(String.join("\n\n",
+                        sse(chunk("{\"role\":\"assistant\",\"reasoning_content\":\"让我想想\"}", null, null)),
+                        sse(chunk("{\"content\":\"Hello\"}", null, null)),
+                        sse(chunk("{\"content\":\" world\"}", null, null)),
+                        sse(chunk("{\"tool_calls\":[{\"index\":0,\"id\":\"call-1\",\"type\":\"function\","
+                                + "\"function\":{\"name\":\"read\",\"arguments\":\"\"}}]}", "tool_calls", null)),
+                        sse(chunk("{\"tool_calls\":[{\"index\":0,\"function\":"
+                                + "{\"arguments\":\"{\\\"path\\\":\\\"README.md\\\"}\"}}]}", null, null)),
+                        sse(chunk("{}", "tool_calls", null)),
+                        "data: [DONE]")));
 
-        StreamAdapter.StreamAccumulator accumulator = new StreamAdapter.StreamAccumulator("msg-stream-01", ModelRef.of("openai", "gpt-4o"));
-
-        List<String> rawChunks = List.of(chunk1, chunk2, chunk3, chunk4, chunkDone);
-        List<UnifiedStreamChunk> parsedChunks = new ArrayList<>();
-
-        // 执行
-        for (String raw : rawChunks) {
-            UnifiedStreamChunk chunk = streamAdapter.parseOpenAiChunk(raw);
-            if (chunk != null) {
-                parsedChunks.add(chunk);
-                accumulator.appendChunk(chunk, null);
-            }
-        }
-
-        var assistantMessage = accumulator.toAssistantMessage(objectMapper);
-
-        // 断言
-        assertThat(parsedChunks).hasSize(4);
-        assertThat(assistantMessage).isNotNull();
-        assertThat(assistantMessage.id()).isEqualTo("msg-stream-01");
-        assertThat(assistantMessage.stopReason()).isEqualTo("toolUse");
-
-        // 内容应包含 1 条文本内容（"Let me read the file."）与 1 次工具调用（"read"）
-        assertThat(assistantMessage.content()).hasSize(2);
-        assertThat(assistantMessage.content().get(0)).isInstanceOf(com.claubloom.harness.protocol.content.TextContent.class);
-        var textContent = (com.claubloom.harness.protocol.content.TextContent) assistantMessage.content().get(0);
-        assertThat(textContent.text()).isEqualTo("Let me read the file.");
-
-        assertThat(assistantMessage.content().get(1)).isInstanceOf(com.claubloom.harness.protocol.content.ToolCallContent.class);
-        var toolCallContent = (com.claubloom.harness.protocol.content.ToolCallContent) assistantMessage.content().get(1);
-        assertThat(toolCallContent.toolCallId()).isEqualTo("call_abc");
-        assertThat(toolCallContent.toolName()).isEqualTo("read");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> inputArgs = (Map<String, Object>) toolCallContent.input();
-        assertThat(inputArgs).containsEntry("path", "/test.txt");
-    }
-
-    /**
-     * TC-P2-03：验证 ProtocolRegistry 将负载路由为 Anthropic/OpenAI 格式，
-     * 且 UpstreamStreamClient 的协议检测可映射到正确的 ApiKeyConfig。
-     */
-    @Test
-    @DisplayName("TC-P2-03: Protocol conversion produces Anthropic and OpenAI payloads with correct schemas")
-    void should_resolveUpstreamUrlAndHeaders_via_protocolSpecMap() throws Exception {
-        // 准备
-        var providerRegistry = new com.claubloom.harness.ai.provider.ProviderRegistry();
-        var adapter = new com.claubloom.harness.ai.adapter.AiModelAdapter(protocolRegistry, providerRegistry, streamAdapter);
-
-        var anthropicProvider = com.claubloom.harness.ai.provider.ProviderConfig.of(
-                "anthropic-custom", "Custom Anthropic", "http://64.83.12.37:8045/v1", "sk-ant-test123", "anthropic"
-        );
-        var openAiProvider = com.claubloom.harness.ai.provider.ProviderConfig.of(
-                "openai-custom", "Custom OpenAI", "http://64.83.12.37:8045/v1", "sk-openai-test123", "openai"
-        );
-
-        // 执行 —— 将供应商配置转换为 ai-router-core 的 ApiKeyConfig（用于驱动 URL 构建与请求头注入）
-        var antKeyConfig = com.claubloom.harness.ai.provider.ProviderRegistry.toApiKeyConfig(anthropicProvider);
-        var openAiKeyConfig = com.claubloom.harness.ai.provider.ProviderRegistry.toApiKeyConfig(openAiProvider);
-
-        // 断言 —— 经 ai-router-core 领域模型校验协议与密钥的一致性
-        assertThat(antKeyConfig.getProtocol()).isEqualTo("anthropic");
-        assertThat(antKeyConfig.getApiKey()).isEqualTo("sk-ant-test123");
-        assertThat(openAiKeyConfig.getProtocol()).isEqualTo("openai");
-        assertThat(openAiKeyConfig.getApiKey()).isEqualTo("sk-openai-test123");
-
-        // 执行 —— 协议转换器将 UnifiedRequest 规范化为各供应商专属的负载
-        var context = new com.claubloom.harness.core.loop.AgentContext();
-        context.getMessages().add(com.claubloom.harness.protocol.message.UserMessage.of("Hi"));
-        var config = com.claubloom.harness.core.loop.AgentLoopConfig.builder()
-                .systemPrompt("You are a helpful assistant.")
-                .model(ModelRef.of("anthropic", "claude-3-5-sonnet-20241022"))
+        List<AgentEvent> events = Collections.synchronizedList(new ArrayList<>());
+        AgentContext context = AgentContext.builder().sessionId("s-e2e").cwd(".")
+                .messages(new ArrayList<>(List.of(UserMessage.text("read the readme"))))
+                .build();
+        AgentLoopConfig config = AgentLoopConfig.builder()
+                .model(new ModelRef("test", "test-model"))
+                .systemPrompt("你是测试助手")
+                .tools(List.of(fakeTool("read")))
                 .build();
 
-        UnifiedRequest anthropicReq = adapter.toUnifiedRequest(context, config, ModelRef.of("anthropic", "claude-3-5-sonnet-20241022"), "anthropic");
-        Map<String, Object> anthropicPayload = protocolRegistry.getRequestConverter("anthropic").buildUpstreamRequest(anthropicReq, "claude-3-5-sonnet-20241022");
+        AssistantMessage result = adapter.call(context, config, events::add).get(60, TimeUnit.SECONDS);
 
-        assertThat(anthropicPayload.get("model")).isEqualTo("claude-3-5-sonnet-20241022");
-        assertThat(anthropicPayload).containsKey("system");
-        assertThat(anthropicPayload).containsKey("stream");
+        assertThat(result.status()).isEqualTo("complete");
+        assertThat(result.stopReason()).isEqualTo("toolUse");
+        assertThat(result.content()).anySatisfy(c -> {
+            assertThat(c).isInstanceOf(ThinkingContent.class);
+            assertThat(((ThinkingContent) c).thinking()).isEqualTo("让我想想");
+        });
+        assertThat(result.content()).anySatisfy(c -> {
+            assertThat(c).isInstanceOf(TextContent.class);
+            assertThat(((TextContent) c).text()).isEqualTo("Hello world");
+        });
+        assertThat(result.content()).anySatisfy(c -> {
+            assertThat(c).isInstanceOf(ToolCallContent.class);
+            ToolCallContent call = (ToolCallContent) c;
+            assertThat(call.toolCallId()).isEqualTo("call-1");
+            assertThat(call.toolName()).isEqualTo("read");
+            assertThat(call.input()).isEqualTo(Map.of("path", "README.md"));
+        });
 
-        UnifiedRequest openAiUnified = adapter.toUnifiedRequest(context, config, ModelRef.of("openai", "gpt-4o"), "openai");
-        Map<String, Object> openAiPayload = protocolRegistry.getRequestConverter("openai").buildUpstreamRequest(openAiUnified, "gpt-4o");
-        assertThat(openAiPayload.get("model")).isEqualTo("gpt-4o");
-        assertThat(openAiPayload).containsKey("messages");
+        // 事件流：思考、文本与工具调用增量均已发出（index 约定 1=thinking / 2=toolCall）
+        List<MessageUpdateEvent> updates = events.stream()
+                .filter(MessageUpdateEvent.class::isInstance)
+                .map(MessageUpdateEvent.class::cast)
+                .toList();
+        assertThat(updates).anyMatch(e -> "thinking".equals(e.kind()) && "让我想想".equals(e.delta()));
+        assertThat(updates).anyMatch(e -> "text".equals(e.kind()) && "Hello".equals(e.delta()));
+        assertThat(updates).anyMatch(e -> "text".equals(e.kind()) && " world".equals(e.delta()));
+        assertThat(updates).anyMatch(e -> "toolCall".equals(e.kind()));
+
+        // 关键约束：ChatModel 内部未执行工具 —— 上游仅收到一次请求（无工具结果回灌的第二轮）
+        RecordedRequest recorded = upstream.takeRequest(2, TimeUnit.SECONDS);
+        assertThat(recorded).isNotNull();
+        String requestBody = recorded.getBody().readUtf8();
+        assertThat(requestBody).contains("\"model\":\"test-model\"");
+        assertThat(requestBody).contains("\"tools\"");
+        assertThat(upstream.getRequestCount()).isEqualTo(1);
     }
 
     /**
-     * TC-P2-04：缺失 index 字段的流式工具调用分片。
+     * TC-P2-03：上游 401 应映射为鉴权失败诊断卡片（BloomAiException），消息进入 error 状态。
      */
     @Test
-    @DisplayName("TC-P2-04: Should aggregate tool call chunks correctly even when index field is omitted")
-    void should_aggregateToolCallChunks_when_indexFieldMissing() {
-        // 准备
-        String chunkNameOnly = "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"id\":\"call_bash_1\",\"type\":\"function\",\"function\":{\"name\":\"bash\"}}]}}]}";
-        String chunkArgsPart1 = "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"function\":{\"arguments\":\"{\\\"command\\\":\\\"ls \"}}]}}]}";
-        String chunkArgsPart2 = "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"function\":{\"arguments\":\"-la\\\"}\"}}]}}]}";
+    @DisplayName("TC-P2-03: Should map 401 upstream error to auth diagnostic card")
+    void should_mapUnauthorizedUpstream_toDiagnosticCard() throws Exception {
+        upstream.enqueue(new MockResponse().setResponseCode(401)
+                .setBody("{\"error\":{\"message\":\"Incorrect API key provided\"}}"));
 
-        StreamAdapter.StreamAccumulator accumulator = new StreamAdapter.StreamAccumulator("msg-stream-02", ModelRef.of("openai", "gpt-4o"));
+        List<AgentEvent> events = Collections.synchronizedList(new ArrayList<>());
+        AgentContext context = AgentContext.builder().sessionId("s-401").cwd(".")
+                .messages(new ArrayList<>(List.of(UserMessage.text("hello"))))
+                .build();
+        AgentLoopConfig config = AgentLoopConfig.builder()
+                .model(new ModelRef("test", "test-model"))
+                .build();
 
-        for (String raw : List.of(chunkNameOnly, chunkArgsPart1, chunkArgsPart2)) {
-            UnifiedStreamChunk chunk = streamAdapter.parseOpenAiChunk(raw);
-            if (chunk != null) {
-                accumulator.appendChunk(chunk, null);
+        AssistantMessage result = adapter.call(context, config, events::add).get(30, TimeUnit.SECONDS);
+
+        assertThat(result.status()).isEqualTo("error");
+        assertThat(result.errorMessage()).contains("鉴权失败");
+        assertThat(result.errorMessage()).contains("Incorrect API key provided");
+        assertThat(events).anyMatch(e -> e instanceof MessageUpdateEvent update
+                && update.delta().contains("鉴权失败"));
+    }
+
+    /**
+     * TC-P2-04：路由失败（模型未在任何供应商声明）应映射为无可用上游诊断。
+     */
+    @Test
+    @DisplayName("TC-P2-04: Should map NO_AVAILABLE_UPSTREAM to diagnostic card")
+    void should_mapUnknownModel_toNoRouteDiagnosticCard() throws Exception {
+        List<AgentEvent> events = Collections.synchronizedList(new ArrayList<>());
+        AgentContext context = AgentContext.builder().sessionId("s-404").cwd(".")
+                .messages(new ArrayList<>(List.of(UserMessage.text("hello"))))
+                .build();
+        AgentLoopConfig config = AgentLoopConfig.builder()
+                .model(new ModelRef("test", "model-not-declared-anywhere"))
+                .build();
+        // 引擎策略选中唯一 Key 后仍会向上游发起请求；显式断开让回退链快速失败
+        upstream.enqueue(new MockResponse().setSocketPolicy(okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START));
+
+        AssistantMessage result = adapter.call(context, config, events::add).get(60, TimeUnit.SECONDS);
+
+        assertThat(result.status()).isEqualTo("error");
+        assertThat(result.errorMessage()).contains("无可用上游");
+    }
+
+    /* ---------- 辅助 ---------- */
+
+    private static String sse(String json) {
+        return "data: " + json;
+    }
+
+    /** 构建单个 OpenAI 流式 chunk：deltaObject 为完整的 delta JSON 对象字符串 */
+    private static String chunk(String deltaObject, String finishReason, String role) {
+        String finishJson = finishReason != null ? "\"finish_reason\":\"" + finishReason + "\"" : "\"finish_reason\":null";
+        return "{\"id\":\"1\",\"object\":\"chat.completion.chunk\",\"model\":\"test-model\","
+                + "\"choices\":[{\"index\":0,\"delta\":" + deltaObject + "," + finishJson + "}]}";
+    }
+
+    /** 测试用工具定义：若被 ChatModel 内部执行将直接抛错，便于断言"未被执行" */
+    private com.claubloom.harness.core.tool.ToolDefinition fakeTool(String name) {
+        return new com.claubloom.harness.core.tool.ToolDefinition() {
+            @Override
+            public String name() {
+                return name;
             }
-        }
 
-        var assistantMsg = accumulator.toAssistantMessage(objectMapper);
+            @Override
+            public String description() {
+                return "test tool";
+            }
 
-        // 断言
-        assertThat(assistantMsg.content()).hasSize(1);
-        assertThat(assistantMsg.content().get(0)).isInstanceOf(com.claubloom.harness.protocol.content.ToolCallContent.class);
-        var tc = (com.claubloom.harness.protocol.content.ToolCallContent) assistantMsg.content().get(0);
-        assertThat(tc.toolName()).isEqualTo("bash");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> input = (Map<String, Object>) tc.input();
-        assertThat(input).containsEntry("command", "ls -la");
-    }
+            @Override
+            public Map<String, Object> parameterSchema() {
+                return Map.of("type", "object",
+                        "properties", Map.of("path", Map.of("type", "string")));
+            }
 
-    /**
-     * TC-P2-05：Anthropic SSE 流解析与消息累积。
-     */
-    @Test
-    @DisplayName("TC-P2-05: Should parse Anthropic SSE stream lines and accumulate text and tool calls")
-    void should_parseAnthropicSseStream_and_accumulateAssistantMessage() throws Exception {
-        // 准备
-        String ssePayload = """
-                event: message_start
-                data: {"type":"message_start","message":{"id":"msg_ant_1","type":"message","role":"assistant","model":"claude-3-5-sonnet","content":[],"stop_reason":null,"usage":{"input_tokens":25,"output_tokens":0}}}
-
-                event: content_block_start
-                data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}
-
-                event: content_block_delta
-                data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"I will execute "}}
-
-                event: content_block_delta
-                data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"the command."}}
-
-                event: content_block_stop
-                data: {"type":"content_block_stop","index":0}
-
-                event: content_block_start
-                data: {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"call_bash_ant_1","name":"bash","input":{}}}
-
-                event: content_block_delta
-                data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\\"command\\": \\"echo 'hello'\\"}"}}
-
-                event: content_block_stop
-                data: {"type":"content_block_stop","index":1}
-
-                event: message_delta
-                data: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":18}}
-
-                event: message_stop
-                data: {"type":"message_stop"}
-                """;
-
-        StreamAdapter.StreamAccumulator accumulator = new StreamAdapter.StreamAccumulator(
-                "msg_ant_1", ModelRef.of("anthropic", "claude-3-5-sonnet")
-        );
-
-        // 执行
-        try (var reader = new java.io.BufferedReader(new java.io.StringReader(ssePayload))) {
-            streamAdapter.consumeAnthropicStream(reader, accumulator, null);
-        }
-
-        var assistantMsg = accumulator.toAssistantMessage(objectMapper);
-
-        // 断言
-        assertThat(assistantMsg).isNotNull();
-        assertThat(assistantMsg.id()).isEqualTo("msg_ant_1");
-        assertThat(assistantMsg.stopReason()).isEqualTo("toolUse");
-
-        // 1 条文本内容 + 1 次工具调用
-        assertThat(assistantMsg.content()).hasSize(2);
-        assertThat(assistantMsg.content().get(0)).isInstanceOf(com.claubloom.harness.protocol.content.TextContent.class);
-        var textContent = (com.claubloom.harness.protocol.content.TextContent) assistantMsg.content().get(0);
-        assertThat(textContent.text()).isEqualTo("I will execute the command.");
-
-        assertThat(assistantMsg.content().get(1)).isInstanceOf(com.claubloom.harness.protocol.content.ToolCallContent.class);
-        var toolCall = (com.claubloom.harness.protocol.content.ToolCallContent) assistantMsg.content().get(1);
-        assertThat(toolCall.toolName()).isEqualTo("bash");
-        assertThat(toolCall.toolCallId()).isEqualTo("call_bash_ant_1");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> input = (Map<String, Object>) toolCall.input();
-        assertThat(input).containsEntry("command", "echo 'hello'");
-
-        // 用量校验
-        assertThat(assistantMsg.usage()).isNotNull();
-        assertThat(assistantMsg.usage().input()).isEqualTo(25);
-        assertThat(assistantMsg.usage().output()).isGreaterThan(0);
+            @Override
+            public CompletableFuture<ToolResult> execute(ToolContext context, Map<String, Object> arguments) {
+                throw new UnsupportedOperationException("工具不应被 ChatModel 内部执行");
+            }
+        };
     }
 }

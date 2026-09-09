@@ -65,10 +65,16 @@ cd BloomHarness
 ```
 
 ### 2. 本地 Maven 依赖准备
-项目耦合了 `com.miniapi:ai-router-core` 引擎，若本地尚未安装该包，可预先在其源码目录下安装至本地 Maven 仓库：
+项目耦合了 `com.miniapi:ai-router-core` 引擎（v1.1.0，含 Spring AI 桥接层），引擎 jar 已随仓库附带在 `libs/` 目录下，无需单独克隆其源码。若本地 Maven 仓库尚未安装该包，执行以下命令安装：
+
 ```bash
-mvn clean install -DskipTests
+mvn install:install-file \
+  -Dfile=libs/ai-router-core-1.1.0.jar \
+  -DpomFile=libs/ai-router-core-1.1.0.pom \
+  -Dpackaging=jar
 ```
+
+> 说明：`-DpomFile` 指向随附的 POM 文件，用于保留 ai-router-core 的传递依赖（spring-ai-model、reactor 等），请勿省略。安装完成后可运行 `mvn clean install -DskipTests` 验证整个工程可正常构建。
 
 ### 3. 前端依赖安装
 ```bash
