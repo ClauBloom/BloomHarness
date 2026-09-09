@@ -31,7 +31,7 @@ public class SkillPromptInjector {
 
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nThe following skills provide specialized instructions for specific tasks.\n");
-        sb.append("Use the read tool to load a skill's file when the task matches its description.\n");
+        sb.append("Call the 'skill' tool with the skill's exact name to load its full instructions when a task matches its description.\n");
         sb.append("When a skill file references a relative path, resolve it against the skill directory (parent of SKILL.md / dirname of the path) and use that absolute path in tool commands.\n\n");
         sb.append("<available_skills>\n");
 

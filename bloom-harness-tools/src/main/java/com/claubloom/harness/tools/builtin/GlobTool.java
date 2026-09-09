@@ -34,7 +34,10 @@ public class GlobTool implements ToolDefinition {
 
     @Override
     public String description() {
-        return "Find files whose paths match a glob pattern. Returns matching file paths relative to search directory.";
+        return "Fast pattern matching for file and directory paths across the workspace. " +
+                "Supports glob patterns like '**/*.ts', 'src/**/*.java', or '*.xml'. " +
+                "Automatically ignores non-source directories (.git, node_modules, target, .m2-repo, .idea, .vscode). " +
+                "Use glob to locate files by name; use grep to search file contents.";
     }
 
     @Override
@@ -42,9 +45,9 @@ public class GlobTool implements ToolDefinition {
         return Map.of(
                 "type", "object",
                 "properties", Map.of(
-                        "pattern", Map.of("type", "string", "description", "Glob pattern to match file paths against (e.g. '**/*.java', 'src/**/*.xml')"),
-                        "path", Map.of("type", "string", "description", "Directory to search in. Defaults to workspace root."),
-                        "limit", Map.of("type", "integer", "description", "Maximum number of file paths to return. Defaults to 100.")
+                        "pattern", Map.of("type", "string", "description", "Glob pattern to match paths against (e.g. '**/*.java', 'src/**/*.{ts,vue}', '**/pom.xml')"),
+                        "path", Map.of("type", "string", "description", "Directory path to search in (relative to workspace root or absolute). Defaults to workspace root."),
+                        "limit", Map.of("type", "integer", "description", "Maximum number of matched paths to return. Defaults to 100.")
                 ),
                 "required", List.of("pattern")
         );

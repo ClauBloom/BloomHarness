@@ -41,7 +41,11 @@ public class BashTool implements ToolDefinition {
 
     @Override
     public String description() {
-        return "Execute a bash shell command and return its stdout/stderr. Non-zero exits are reported as [exit code: N].";
+        return "Execute a shell command in the workspace and return combined stdout/stderr. " +
+                "On Windows commands run via cmd.exe /c; on Unix via bash -c. " +
+                "Non-zero exit codes append [exit code: N]. Long outputs are truncated at the tail. " +
+                "DO NOT use for file operations (reading, writing, editing, searching files) - always use read, edit, write, glob, or grep instead. " +
+                "Avoid interactive commands, pagers, and prompts as they will hang.";
     }
 
     @Override
@@ -49,9 +53,9 @@ public class BashTool implements ToolDefinition {
         return Map.of(
                 "type", "object",
                 "properties", Map.of(
-                        "command", Map.of("type", "string", "description", "The shell command to execute"),
-                        "workdir", Map.of("type", "string", "description", "Working directory for the command. Defaults to workspace root."),
-                        "timeoutMs", Map.of("type", "integer", "description", "Command timeout in milliseconds. Defaults to 60000ms (60s).")
+                        "command", Map.of("type", "string", "description", "The shell command to execute non-interactively"),
+                        "workdir", Map.of("type", "string", "description", "Working directory relative to workspace root or absolute path. Defaults to workspace root."),
+                        "timeoutMs", Map.of("type", "integer", "description", "Execution timeout in milliseconds (10 to 600000 ms, default 60000 ms)")
                 ),
                 "required", List.of("command")
         );

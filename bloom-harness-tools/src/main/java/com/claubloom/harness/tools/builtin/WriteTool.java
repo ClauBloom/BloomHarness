@@ -35,7 +35,10 @@ public class WriteTool implements ToolDefinition {
 
     @Override
     public String description() {
-        return "创建或完全替换 UTF-8 文本文件。自动创建父级目录，采用原子写入保护。";
+        return "Create a new UTF-8 text file or completely overwrite an existing file. " +
+                "Automatically creates parent directories and uses atomic temporary file replacement. " +
+                "ALWAYS prefer using the 'edit' tool for existing files; only use 'write' when creating new files or doing full rewrites. " +
+                "Do not create unsolicited documentation files (*.md, README) unless requested.";
     }
 
     @Override
@@ -43,7 +46,7 @@ public class WriteTool implements ToolDefinition {
         return Map.of(
                 "type", "object",
                 "properties", Map.of(
-                        "path", Map.of("type", "string", "description", "Path to the file to write (relative or absolute)"),
+                        "path", Map.of("type", "string", "description", "Path to the file to write (relative to workspace root or absolute)"),
                         "content", Map.of("type", "string", "description", "Full UTF-8 content to write into the file")
                 ),
                 "required", List.of("path", "content")

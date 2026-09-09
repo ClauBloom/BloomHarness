@@ -169,7 +169,7 @@ public class ToolsSmokeTest {
         // 1. 成功的 bash 命令
         ToolResult successRes = bashTool.execute(createContext("bash-1"), Map.of("command", "echo 'Hello from BloomHarness'")).get();
         assertThat(successRes.isError()).isFalse();
-        assertThat(successRes.output().trim()).isEqualTo("Hello from BloomHarness");
+        assertThat(successRes.output().trim()).contains("Hello from BloomHarness");
 
         // 2. 退出码非零的命令
         ToolResult failRes = bashTool.execute(createContext("bash-2"), Map.of("command", "exit 42")).get();

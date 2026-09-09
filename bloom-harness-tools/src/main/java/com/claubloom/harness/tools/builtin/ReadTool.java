@@ -36,7 +36,10 @@ public class ReadTool implements ToolDefinition {
 
     @Override
     public String description() {
-        return "Read UTF-8 text file contents with line numbers. Use offset and limit to paginate through large files.";
+        return "Read UTF-8 text file contents with line numbers formatted as 'LINE: CONTENT'. " +
+                "Always read a file before modifying it with edit or write. " +
+                "Supports 1-indexed line offset and limit pagination for large files. " +
+                "Only reads text files; returns an error for directories or missing files.";
     }
 
     @Override
@@ -44,9 +47,9 @@ public class ReadTool implements ToolDefinition {
         return Map.of(
                 "type", "object",
                 "properties", Map.of(
-                        "path", Map.of("type", "string", "description", "Path to the file to read (relative or absolute)"),
-                        "offset", Map.of("type", "integer", "description", "Line number to start reading from (1-indexed)"),
-                        "limit", Map.of("type", "integer", "description", "Maximum number of lines to read")
+                        "path", Map.of("type", "string", "description", "Path to the file to read (relative to workspace root or absolute)"),
+                        "offset", Map.of("type", "integer", "description", "Line number to start reading from (1-indexed, default 1)"),
+                        "limit", Map.of("type", "integer", "description", "Maximum number of lines to read. Omit to read the whole file; very large outputs are truncated with a hint telling you which offset to continue from.")
                 ),
                 "required", List.of("path")
         );

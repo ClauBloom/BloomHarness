@@ -35,7 +35,11 @@ public class EditTool implements ToolDefinition {
 
     @Override
     public String description() {
-        return "Edit an existing UTF-8 text file by replacing literal text. By default old_string must appear exactly once.";
+        return "Edit an existing UTF-8 text file by performing an exact literal string replacement. " +
+                "You must read the file first. By default, old_string must appear exactly once in the file; " +
+                "provide sufficient surrounding context lines to make old_string uniquely match, or set replace_all=true. " +
+                "Do not include line number prefixes from the read tool in old_string or new_string. " +
+                "Preserve exact indentation (tabs/spaces). Uses atomic write protection.";
     }
 
     @Override
@@ -43,10 +47,10 @@ public class EditTool implements ToolDefinition {
         return Map.of(
                 "type", "object",
                 "properties", Map.of(
-                        "path", Map.of("type", "string", "description", "Path to the file to edit (relative or absolute)"),
-                        "old_string", Map.of("type", "string", "description", "Literal text to replace. Must match exactly."),
-                        "new_string", Map.of("type", "string", "description", "Literal replacement text."),
-                        "replace_all", Map.of("type", "boolean", "description", "Replace all occurrences. Defaults to false.")
+                        "path", Map.of("type", "string", "description", "Path to the existing file to edit (relative to workspace root or absolute)"),
+                        "old_string", Map.of("type", "string", "description", "Exact literal text to replace, including exact whitespace and indentation. Must match uniquely unless replace_all is true."),
+                        "new_string", Map.of("type", "string", "description", "Exact literal replacement text with matching indentation"),
+                        "replace_all", Map.of("type", "boolean", "description", "When true, replaces all occurrences of old_string across the file (useful for variable renaming). Defaults to false.")
                 ),
                 "required", List.of("path", "old_string", "new_string")
         );
@@ -89,7 +93,7 @@ public class EditTool implements ToolDefinition {
 
                 int count = countOccurrences(currentContent, oldString);
                 if (count == 0) {
-                    return ToolResult.error("old_string was not found in " + rawPath);
+                    return ToolResult.error("old_string was not found in " + rawPath + ". Make sure old_string matches the file's exact indentation and line breaks, and does not include line number prefixes from the read tool.");
                 }
 
                 if (!replaceAll && count > 1) {

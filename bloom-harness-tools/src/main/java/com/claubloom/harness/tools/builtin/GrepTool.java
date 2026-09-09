@@ -40,7 +40,10 @@ public class GrepTool implements ToolDefinition {
 
     @Override
     public String description() {
-        return "Search file contents with a regular expression. Returns matching lines with line numbers, grouped by file.";
+        return "Search file contents using regular expressions. Returns matched lines grouped by file with line numbers. " +
+                "Supports full Java regex syntax. Can filter target files by glob pattern via 'include' parameter. " +
+                "Automatically ignores non-source directories (.git, node_modules, target, .m2-repo, .idea, .vscode). " +
+                "Use grep when searching for symbols, function definitions, strings, or errors across code.";
     }
 
     @Override
@@ -48,10 +51,10 @@ public class GrepTool implements ToolDefinition {
         return Map.of(
                 "type", "object",
                 "properties", Map.of(
-                        "pattern", Map.of("type", "string", "description", "Regular expression to search for"),
-                        "path", Map.of("type", "string", "description", "File or directory to search. Defaults to workspace root."),
-                        "include", Map.of("type", "string", "description", "Glob filter for files to search (e.g. '*.java', '**/*.xml')"),
-                        "ignoreCase", Map.of("type", "boolean", "description", "Case-insensitive matching. Defaults to false."),
+                        "pattern", Map.of("type", "string", "description", "Regular expression pattern to search for (e.g. 'class\\s+\\w+', 'buildSystemPrompt', 'error.*timeout')"),
+                        "path", Map.of("type", "string", "description", "Directory or file to search in (relative or absolute). Defaults to workspace root."),
+                        "include", Map.of("type", "string", "description", "Glob filter restricting search files (e.g. '*.java', '*.{ts,vue}', 'pom.xml')"),
+                        "ignoreCase", Map.of("type", "boolean", "description", "Case-insensitive search. Defaults to false."),
                         "limit", Map.of("type", "integer", "description", "Maximum matching lines to return. Defaults to 250.")
                 ),
                 "required", List.of("pattern")
