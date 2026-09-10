@@ -33,6 +33,13 @@ public class BashTool implements ToolDefinition {
     private final PathSandbox pathSandbox;
     private static final long DEFAULT_TIMEOUT_MS = 60_000L; // 默认超时 60 秒
     private static final long MAX_TIMEOUT_MS = 600_000L;    // 最长超时 10 分钟
+    /** 中止轮询分片：每次等待进程退出的最长间隔，决定中止响应的上限延迟 */
+    private static final long WAIT_SLICE_MS = 100L;
+
+    /** @return 用户是否已请求中止当前轮次（无中止令牌时视为不可中止） */
+    private static boolean isAbortRequested(ToolContext context) {
+        return context != null && context.abortHandle() != null && context.abortHandle().isAborted();
+    }
 
     @Override
     public String name() {
@@ -114,7 +121,36 @@ public class BashTool implements ToolDefinition {
                     }
                 });
 
-                boolean finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
+                // 分片轮询等待进程退出：等待期间周期性检查用户中止请求，
+                // 中止时立即强杀整个进程树，保证"终止"按钮对长时间运行的命令即时生效
+                long deadline = System.currentTimeMillis() + timeoutMs;
+                boolean finished = false;
+                boolean abortedByUser = false;
+                while (true) {
+                    if (process.waitFor(WAIT_SLICE_MS, TimeUnit.MILLISECONDS)) {
+                        finished = true;
+                        break;
+                    }
+                    if (isAbortRequested(context)) {
+                        abortedByUser = true;
+                        break;
+                    }
+                    if (System.currentTimeMillis() >= deadline) {
+                        break; // 超时，走下方超时处理
+                    }
+                }
+
+                if (abortedByUser) {
+                    process.descendants().forEach(ProcessHandle::destroyForcibly);
+                    process.destroyForcibly();
+                    readerThread.interrupt();
+                    log.info("Bash command aborted by user, process tree killed: {}", command);
+                    String partialOutput = outputBuffer.toString();
+                    return ToolResult.error(
+                            "[aborted by user] Command was terminated by an abort request."
+                                    + (partialOutput.isEmpty() ? "" : "\n" + partialOutput));
+                }
+
                 if (!finished) {
                     // 强制终止进程及其全部后代子进程
                     process.descendants().forEach(ProcessHandle::destroyForcibly);

@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -103,9 +104,19 @@ public class AgentLoop {
 
         boolean hasMoreToolCalls = true;
         int consecutiveEmptyNudges = 0;
+        boolean aborted = false;
+        TurnAbortHandle abortHandle = config.getAbortHandle();
 
         while ((hasMoreToolCalls || !pendingMessages.isEmpty()) && turnCount < maxTurns) {
             turnCount++;
+
+            // 中止检查点 1：用户已请求中止，立即退出循环（不再发起新的推理轮次）
+            if (abortHandle != null && abortHandle.isAborted()) {
+                log.info("Session {}: abort requested, stopping agent loop at turn boundary",
+                        currentContext.getSessionId());
+                aborted = true;
+                break;
+            }
 
             // 注入待处理的中途干预消息
             if (!pendingMessages.isEmpty()) {
@@ -118,8 +129,13 @@ public class AgentLoop {
                 pendingMessages.clear();
             }
 
-            // 为助手轮次调用 LLM（空响应自动重试与续跑提示，见 callWithEmptyRetry）
-            AssistantMessage assistantMessage = callWithEmptyRetry(currentContext, config, emit, llmCaller);
+            // 为助手轮次调用 LLM（空响应自动重试与续跑提示，见 callLlm）
+            LlmCallOutcome outcome = callLlm(currentContext, config, emit, llmCaller, abortHandle);
+            if (outcome.aborted()) {
+                aborted = true;
+                break;
+            }
+            AssistantMessage assistantMessage = outcome.message();
             if (assistantMessage == null) {
                 // 空响应重试耗尽：注入一条续跑提示进入下一轮，给模型一次从中断处恢复的机会
                 consecutiveEmptyNudges++;
@@ -175,11 +191,19 @@ public class AgentLoop {
             hasMoreToolCalls = false;
 
             if (!toolCalls.isEmpty()) {
+                // 中止检查点 3：不再执行本轮工具调用（助手的工具调用意图随中止一并作废）
+                if (abortHandle != null && abortHandle.isAborted()) {
+                    log.info("Session {}: abort requested before tool execution, discarding {} pending tool calls",
+                            currentContext.getSessionId(), toolCalls.size());
+                    aborted = true;
+                    break;
+                }
                 ToolContext toolContext = new ToolContext(
                         currentContext.getSessionId(),
                         currentContext.getCwd(),
                         currentContext,
-                        emit
+                        emit,
+                        abortHandle
                 );
 
                 ToolExecutor.ExecutionBatchResult batchResult = toolExecutor
@@ -221,6 +245,24 @@ public class AgentLoop {
             }
         }
 
+        // 中止退出：写入可见的中止标记（前端按 interrupted 样式渲染），保证对话记录完整可读
+        if (aborted) {
+            log.info("Session {}: agent loop stopped by user abort after {} turns", currentContext.getSessionId(), turnCount);
+            AssistantMessage abortMarker = new AssistantMessage(
+                    UUID.randomUUID().toString(),
+                    "assistant",
+                    List.of(new TextContent("⏹️ 任务已由用户中止。")),
+                    null, null, null, System.currentTimeMillis(),
+                    "aborted", "aborted", null);
+            emit.emit(new MessageStartEvent(abortMarker));
+            emit.emit(new MessageEndEvent(abortMarker));
+            currentContext.addMessage(abortMarker);
+            newMessages.add(abortMarker);
+            emit.emit(new TurnEndEvent(abortMarker, List.of()));
+            emit.emit(new AgentEndEvent(newMessages));
+            return;
+        }
+
         // 循环若因轮数上限耗尽而退出（仍有待执行的工具调用或待注入消息），
         // 必须给出用户可见的终止原因，而不是无声消失让人误以为任务完成
         if (hasMoreToolCalls || !pendingMessages.isEmpty()) {
@@ -242,26 +284,55 @@ public class AgentLoop {
         emit.emit(new AgentEndEvent(newMessages));
     }
 
+    /** 单次"带韧性策略"的 LLM 调用结果：{@code aborted=true} 表示期间收到中止请求（message 恒为 null） */
+    private record LlmCallOutcome(AssistantMessage message, boolean aborted) {
+    }
+
     /**
-     * 调用模型并对“空响应”做韧性处理。
+     * 调用模型并对"空响应"做韧性处理，同时接入中止机制。
      * <p>
-     * 上游（或路由引擎）偶尔会产出 HTTP 200 但零文本、零工具调用的空流——若把它当作最终答复，
-     * 整个任务会被静默终止且不留任何痕迹（这正是“执行到一半突然停止”的主要成因）。
-     * 策略：同一上下文立即重试 {@link #MAX_EMPTY_RESPONSE_RETRIES} 次；仍为空则返回 {@code null}，
-     * 由调用方注入续跑提示进入下一轮；连续多轮仍空则放弃并给出可见错误卡片。
-     *
-     * @return 有效的助手消息；返回 {@code null} 表示空响应重试耗尽、已请求注入续跑提示
+     * 中止：调用前轮询中止令牌；在途调用登记到令牌（供运行时 cancel 以中断流式输出），
+     * 被 {@code cancel} 时 join 抛出 {@link CancellationException}，按中止处理。
+     * <p>
+     * 空响应韧性：上游偶尔会产出 HTTP 200 但零文本、零工具调用的空流——若把它当作最终答复，
+     * 整个任务会被静默终止且不留任何痕迹（这正是"执行到一半突然停止"的主要成因）。
+     * 策略：同一上下文立即重试 {@link #MAX_EMPTY_RESPONSE_RETRIES} 次；仍为空则返回
+     * {@code message=null, aborted=false}，由调用方注入续跑提示进入下一轮。
      */
-    private AssistantMessage callWithEmptyRetry(
+    private LlmCallOutcome callLlm(
             AgentContext context,
             AgentLoopConfig config,
             AgentEventSink emit,
-            LlmCaller llmCaller
+            LlmCaller llmCaller,
+            TurnAbortHandle abortHandle
     ) throws Exception {
         for (int attempt = 0; ; attempt++) {
-            AssistantMessage message = llmCaller.call(context, config, emit).join();
+            // 中止检查点 2a：发起新调用前
+            if (abortHandle != null && abortHandle.isAborted()) {
+                return new LlmCallOutcome(null, true);
+            }
+            CompletableFuture<AssistantMessage> callFuture = llmCaller.call(context, config, emit);
+            if (abortHandle != null) {
+                abortHandle.track(callFuture);
+            }
+            AssistantMessage message;
+            try {
+                message = callFuture.join();
+            } catch (CancellationException e) {
+                // 运行时 abort() 已取消在途调用，流式输出被即时中断
+                log.info("Session {}: in-flight LLM call cancelled by abort", context.getSessionId());
+                return new LlmCallOutcome(null, true);
+            } finally {
+                if (abortHandle != null) {
+                    abortHandle.track(null);
+                }
+            }
+            // 中止检查点 2b：调用已完成但期间收到中止请求——响应随中止一并作废，不写入记录
+            if (abortHandle != null && abortHandle.isAborted()) {
+                return new LlmCallOutcome(null, true);
+            }
             if (!isEmptyResponse(message)) {
-                return message;
+                return new LlmCallOutcome(message, false);
             }
             if (attempt < MAX_EMPTY_RESPONSE_RETRIES) {
                 log.warn("Session {}: received empty assistant response (call attempt {}/{}), retrying immediately",
@@ -270,7 +341,7 @@ public class AgentLoop {
             }
             log.warn("Session {}: empty assistant responses persisted after {} calls, requesting continuation nudge",
                     context.getSessionId(), attempt + 1);
-            return null;
+            return new LlmCallOutcome(null, false);
         }
     }
 

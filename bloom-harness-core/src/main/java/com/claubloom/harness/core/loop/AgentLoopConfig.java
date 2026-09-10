@@ -42,6 +42,12 @@ public class AgentLoopConfig {
 
     private Function<AgentContext, NextTurnSnapshot> prepareNextTurn;
 
+    /**
+     * 中止令牌：由会话运行时提供，循环在轮次边界轮询并登记在途 LLM 调用；
+     * 为 {@code null} 时本轮运行不支持中途中止。
+     */
+    private TurnAbortHandle abortHandle;
+
     public record NextTurnSnapshot(
             AgentContext context,
             ModelRef model,

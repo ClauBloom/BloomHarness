@@ -18,6 +18,8 @@ import com.claubloom.harness.server.service.PiSessionRuntimeEvent;
 import com.claubloom.harness.server.stream.SessionEventBroadcaster;
 import com.claubloom.harness.storage.service.SessionStorageService;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,24 @@ public class AgentSessionRuntime implements PiSessionRuntime {
     private final AtomicReference<ModelRef> model = new AtomicReference<>(null);
     private final AtomicReference<ThinkingLevel> thinkingLevel = new AtomicReference<>(ThinkingLevel.OFF);
     private final java.util.Queue<com.claubloom.harness.protocol.message.UserMessage> steerQueue = new java.util.concurrent.ConcurrentLinkedQueue<>();
+
+    /** 用户中止请求标志：由 {@link #abort()} 置位，循环在下一个边界退出 */
+    private final AtomicBoolean abortRequested = new AtomicBoolean(false);
+    /** 当前在途的 LLM 调用：中止时立即 cancel，中断流式输出、停止消耗上游 Token */
+    private final AtomicReference<CompletableFuture<com.claubloom.harness.protocol.message.AssistantMessage>> activeCall =
+            new AtomicReference<>(null);
+    /** 传给 AgentLoop 的中止令牌 */
+    private final com.claubloom.harness.core.loop.TurnAbortHandle abortHandle = new com.claubloom.harness.core.loop.TurnAbortHandle() {
+        @Override
+        public boolean isAborted() {
+            return abortRequested.get();
+        }
+
+        @Override
+        public void track(CompletableFuture<com.claubloom.harness.protocol.message.AssistantMessage> active) {
+            activeCall.set(active);
+        }
+    };
 
     public AgentSessionRuntime(
             String sessionId,
@@ -116,6 +136,9 @@ public class AgentSessionRuntime implements PiSessionRuntime {
         if (!phase.compareAndSet(SessionPhase.IDLE, SessionPhase.TURN)) {
             throw new SessionBusyError();
         }
+        // 新轮次开始前复位中止状态，避免上一轮残留的中止请求误杀本次任务
+        abortRequested.set(false);
+        activeCall.set(null);
         try {
             UserMessage userMessage = UserMessage.text(text);
             // 在追加提示词之前,先对先前的对话记录做快照,因为
@@ -153,6 +176,7 @@ public class AgentSessionRuntime implements PiSessionRuntime {
         return AgentLoopConfig.builder()
                 .maxTurns(coreProperties.getMaxTurns())
                 .compactionThreshold(coreProperties.getCompactionThreshold())
+                .abortHandle(abortHandle)
                 .model(model.get())
                 .thinkingLevel(thinkingLevel.get())
                 .systemPrompt(systemPrompt)
@@ -178,7 +202,16 @@ public class AgentSessionRuntime implements PiSessionRuntime {
     @Override
     public void abort() {
         steerQueue.clear();
-        phase.set(SessionPhase.IDLE);
+        // 请求协作式停止：循环在下一个边界（调用前/调用后/工具执行前）立即退出；
+        // 同时取消在途 LLM 调用，中断流式输出并停止消耗上游 Token
+        abortRequested.set(true);
+        CompletableFuture<com.claubloom.harness.protocol.message.AssistantMessage> inFlight = activeCall.getAndSet(null);
+        if (inFlight != null) {
+            inFlight.cancel(true);
+        }
+        // 注意：不在此处把 phase 置回 IDLE——phase 由 prompt() 的 finally 在循环真正结束后归位。
+        // 若提前置 IDLE，用户中止后立即发送新指令会绕过 SessionBusyError 校验，
+        // 导致两个循环在同一会话上并发运行。
         emit(new PiSessionRuntimeEvent.SnapshotEvent());
     }
 

@@ -42,6 +42,7 @@ import org.springframework.ai.content.Media;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MimeTypeUtils;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -108,7 +109,7 @@ public class SpringAiModelAdapter implements LlmCaller {
         ChatStreamAccumulator accumulator = new ChatStreamAccumulator(messageId, modelRef);
 
         CompletableFuture<AssistantMessage> future = new CompletableFuture<>();
-        chatModelRouter.stream(prompt).subscribe(
+        Disposable disposable = chatModelRouter.stream(prompt).subscribe(
                 // 每个流式分片：聚合 + 发射事件
                 response -> accumulator.accept(response, eventSink),
                 // 引擎错误（路由失败/上游异常）→ 诊断卡片映射
@@ -129,6 +130,9 @@ public class SpringAiModelAdapter implements LlmCaller {
                     }
                     future.complete(message);
                 });
+        // 调用被取消（用户中止）时立即释放上游流式订阅：停止接收 token 并断开上游连接，
+        // 而不是等当前响应自然结束——这是"中止按钮即时生效"的关键一环
+        future.whenComplete((ignored, throwable) -> disposable.dispose());
         return future;
     }
 
