@@ -212,6 +212,12 @@ public class SpringAiModelAdapter implements LlmCaller {
                             tc.toolCallId(), "function", tc.toolName(), toJson(tc.input())));
                 }
             }
+            // 防御：空 assistant 消息（上游空响应事故留下的历史残留）不回传上游，
+            // 否则可能持续诱发上游再次返回空响应，形成连锁中断
+            if (toolCalls.isEmpty() && text.isEmpty()) {
+                log.warn("Skipping empty assistant message {} when building upstream prompt", am.id());
+                return null;
+            }
             return org.springframework.ai.chat.messages.AssistantMessage.builder()
                     .content(text.toString())
                     .properties(Map.of("role", "assistant"))

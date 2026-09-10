@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 public class AgentLoopConfig {
 
     @Builder.Default
-    private int maxTurns = 50;
+    private int maxTurns = 200;
 
     @Builder.Default
     private double compactionThreshold = 0.8;

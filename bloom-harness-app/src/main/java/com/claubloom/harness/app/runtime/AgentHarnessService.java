@@ -36,6 +36,7 @@ public class AgentHarnessService implements PiServerService {
     private final SystemPromptBuilder systemPromptBuilder;
     private final ToolRegistry toolRegistry;
     private final ModelRef defaultModel;
+    private final com.claubloom.harness.core.config.CoreProperties coreProperties;
     private final Map<String, PiSessionRuntime> liveRuntimes = new ConcurrentHashMap<>();
 
     public AgentHarnessService(
@@ -45,7 +46,8 @@ public class AgentHarnessService implements PiServerService {
             SessionEventBroadcaster broadcaster,
             SystemPromptBuilder systemPromptBuilder,
             ToolRegistry toolRegistry,
-            com.claubloom.harness.ai.config.AiProperties aiProperties) {
+            com.claubloom.harness.ai.config.AiProperties aiProperties,
+            com.claubloom.harness.core.config.CoreProperties coreProperties) {
         this.storage = storage;
         this.agentLoop = agentLoop;
         this.llmCaller = llmCaller;
@@ -53,6 +55,7 @@ public class AgentHarnessService implements PiServerService {
         this.systemPromptBuilder = systemPromptBuilder;
         this.toolRegistry = toolRegistry;
         this.defaultModel = parseModelRef(aiProperties.getDefaultModel());
+        this.coreProperties = coreProperties;
     }
 
     @Override
@@ -107,7 +110,8 @@ public class AgentHarnessService implements PiServerService {
                             null),
                     List.copyOf(toolRegistry.list()),
                     options.model() != null ? options.model() : defaultModel,
-                    options.thinkingLevel());
+                    options.thinkingLevel(),
+                    coreProperties);
         });
     }
 

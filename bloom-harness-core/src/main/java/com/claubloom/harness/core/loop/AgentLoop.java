@@ -3,10 +3,12 @@ package com.claubloom.harness.core.loop;
 import com.claubloom.harness.core.event.*;
 import com.claubloom.harness.core.tool.ToolContext;
 import com.claubloom.harness.core.tool.ToolExecutor;
+import com.claubloom.harness.protocol.content.TextContent;
 import com.claubloom.harness.protocol.content.ToolCallContent;
 import com.claubloom.harness.protocol.message.AgentMessage;
 import com.claubloom.harness.protocol.message.AssistantMessage;
 import com.claubloom.harness.protocol.message.ToolResultMessage;
+import com.claubloom.harness.protocol.message.UserMessage;
 import com.claubloom.harness.protocol.tool.ToolCall;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AgentLoop {
 
     private final ToolExecutor toolExecutor;
+
+    /** 空响应（无文本/无工具调用）时，同一上下文的立即重试次数 */
+    private static final int MAX_EMPTY_RESPONSE_RETRIES = 1;
+
+    /** 空响应重试耗尽后，注入续跑提示的最大次数；连续超过该次数仍为空则放弃并给出可见错误 */
+    private static final int MAX_EMPTY_RESPONSE_NUDGES = 2;
 
     /**
      * 启动并运行智能体自主循环。
@@ -87,13 +95,14 @@ public class AgentLoop {
             LlmCaller llmCaller
     ) throws Exception {
         int turnCount = 0;
-        int maxTurns = config.getMaxTurns() > 0 ? config.getMaxTurns() : 50;
+        int maxTurns = config.getMaxTurns() > 0 ? config.getMaxTurns() : 200;
 
         List<AgentMessage> pendingMessages = config.getGetSteeringMessages() != null
                 ? new ArrayList<>(config.getGetSteeringMessages().get())
                 : new ArrayList<>();
 
         boolean hasMoreToolCalls = true;
+        int consecutiveEmptyNudges = 0;
 
         while ((hasMoreToolCalls || !pendingMessages.isEmpty()) && turnCount < maxTurns) {
             turnCount++;
@@ -109,8 +118,38 @@ public class AgentLoop {
                 pendingMessages.clear();
             }
 
-            // 为助手轮次调用 LLM
-            AssistantMessage assistantMessage = llmCaller.call(currentContext, config, emit).join();
+            // 为助手轮次调用 LLM（空响应自动重试与续跑提示，见 callWithEmptyRetry）
+            AssistantMessage assistantMessage = callWithEmptyRetry(currentContext, config, emit, llmCaller);
+            if (assistantMessage == null) {
+                // 空响应重试耗尽：注入一条续跑提示进入下一轮，给模型一次从中断处恢复的机会
+                consecutiveEmptyNudges++;
+                if (consecutiveEmptyNudges > MAX_EMPTY_RESPONSE_NUDGES) {
+                    log.error("Session {}: model kept returning empty responses after {} continuation nudges, aborting run",
+                            currentContext.getSessionId(), MAX_EMPTY_RESPONSE_NUDGES);
+                    AssistantMessage giveUp = AssistantMessage.error(
+                            UUID.randomUUID().toString(),
+                            List.of(new TextContent(
+                                    "⚠️ **模型连续返回空响应，任务已中止。**\n\n自动重试与续跑提示均未生效，"
+                                            + "可能是上游服务商临时故障或当前上下文触发了上游兼容性问题。"
+                                            + "请发送“继续”重试，或在设置(⚙️)中检查/更换供应商与模型。")),
+                            null, null, System.currentTimeMillis(), "模型连续返回空响应");
+                    emit.emit(new MessageStartEvent(giveUp));
+                    emit.emit(new MessageEndEvent(giveUp));
+                    currentContext.addMessage(giveUp);
+                    newMessages.add(giveUp);
+                    emit.emit(new TurnEndEvent(giveUp, List.of()));
+                    emit.emit(new AgentEndEvent(newMessages));
+                    return;
+                }
+                UserMessage nudge = UserMessage.text(
+                        "（系统提示：上一轮模型返回了空响应且自动重试无效。请从中断处继续完成任务；"
+                                + "如果任务已经完成，请直接给出最终结论。）");
+                pendingMessages.add(nudge);
+                emit.emit(new TurnStartEvent());
+                continue;
+            }
+            consecutiveEmptyNudges = 0;
+
             emit.emit(new MessageStartEvent(assistantMessage));
             emit.emit(new MessageEndEvent(assistantMessage));
             currentContext.addMessage(assistantMessage);
@@ -182,6 +221,76 @@ public class AgentLoop {
             }
         }
 
+        // 循环若因轮数上限耗尽而退出（仍有待执行的工具调用或待注入消息），
+        // 必须给出用户可见的终止原因，而不是无声消失让人误以为任务完成
+        if (hasMoreToolCalls || !pendingMessages.isEmpty()) {
+            log.warn("Session {}: agent loop exhausted maxTurns ({}), stopping with visible notice",
+                    currentContext.getSessionId(), maxTurns);
+            AssistantMessage limitMessage = AssistantMessage.error(
+                    UUID.randomUUID().toString(),
+                    List.of(new TextContent(
+                            "⚠️ **已达单次任务最大轮数 (" + maxTurns + ")，任务尚未完成。**\n\n"
+                                    + "发送“继续”即可在新一轮执行中接着当前进度继续。")),
+                    null, null, System.currentTimeMillis(), "已达最大轮数上限");
+            emit.emit(new MessageStartEvent(limitMessage));
+            emit.emit(new MessageEndEvent(limitMessage));
+            currentContext.addMessage(limitMessage);
+            newMessages.add(limitMessage);
+            emit.emit(new TurnEndEvent(limitMessage, List.of()));
+        }
+
         emit.emit(new AgentEndEvent(newMessages));
+    }
+
+    /**
+     * 调用模型并对“空响应”做韧性处理。
+     * <p>
+     * 上游（或路由引擎）偶尔会产出 HTTP 200 但零文本、零工具调用的空流——若把它当作最终答复，
+     * 整个任务会被静默终止且不留任何痕迹（这正是“执行到一半突然停止”的主要成因）。
+     * 策略：同一上下文立即重试 {@link #MAX_EMPTY_RESPONSE_RETRIES} 次；仍为空则返回 {@code null}，
+     * 由调用方注入续跑提示进入下一轮；连续多轮仍空则放弃并给出可见错误卡片。
+     *
+     * @return 有效的助手消息；返回 {@code null} 表示空响应重试耗尽、已请求注入续跑提示
+     */
+    private AssistantMessage callWithEmptyRetry(
+            AgentContext context,
+            AgentLoopConfig config,
+            AgentEventSink emit,
+            LlmCaller llmCaller
+    ) throws Exception {
+        for (int attempt = 0; ; attempt++) {
+            AssistantMessage message = llmCaller.call(context, config, emit).join();
+            if (!isEmptyResponse(message)) {
+                return message;
+            }
+            if (attempt < MAX_EMPTY_RESPONSE_RETRIES) {
+                log.warn("Session {}: received empty assistant response (call attempt {}/{}), retrying immediately",
+                        context.getSessionId(), attempt + 1, MAX_EMPTY_RESPONSE_RETRIES + 1);
+                continue;
+            }
+            log.warn("Session {}: empty assistant responses persisted after {} calls, requesting continuation nudge",
+                    context.getSessionId(), attempt + 1);
+            return null;
+        }
+    }
+
+    /**
+     * 判断是否为空响应：既无任何工具调用，也无任何非空白文本。
+     * 仅含思考内容的响应同样视为空（思考内容不回传上下文，对用户不可见）。
+     */
+    private static boolean isEmptyResponse(AssistantMessage message) {
+        if (message == null || message.content() == null || message.content().isEmpty()) {
+            return true;
+        }
+        boolean hasText = false;
+        boolean hasToolCall = false;
+        for (var content : message.content()) {
+            if (content instanceof ToolCallContent) {
+                hasToolCall = true;
+            } else if (content instanceof TextContent tc && tc.text() != null && !tc.text().isBlank()) {
+                hasText = true;
+            }
+        }
+        return !hasText && !hasToolCall;
     }
 }

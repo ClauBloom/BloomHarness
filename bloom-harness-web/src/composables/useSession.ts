@@ -54,7 +54,7 @@ export function useSession() {
         }
         store.setSessionList(list);
         ui.reportBackendOk();
-        return list;
+        return lis
       }
       console.warn('Failed to fetch sessions, status:', res.status);
       ui.reportBackendFailure();

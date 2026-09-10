@@ -21,6 +21,14 @@ bloom:
     max-frame-length: 16777216
     handshake-timeout-ms: 5000
 
+# 智能体核心引擎配置（CoreProperties）
+bloom-harness:
+  core:
+    # 单次任务最大推理轮数；耗尽时任务会以可见提示终止而非无声消失
+    max-turns: 200
+    # 触发上下文压缩的窗口用量阈值比例
+    compaction-threshold: 0.8
+
 logging:
   level:
     com.claubloom.harness: INFO

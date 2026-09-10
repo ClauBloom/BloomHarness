@@ -37,6 +37,7 @@ public class AgentSessionRuntime implements PiSessionRuntime {
     private final SessionEventBroadcaster broadcaster;
     private final String systemPrompt;
     private final List<ToolDefinition> tools;
+    private final com.claubloom.harness.core.config.CoreProperties coreProperties;
     private final List<Consumer<PiSessionRuntimeEvent>> listeners = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     private final AtomicReference<SessionPhase> phase = new AtomicReference<>(SessionPhase.IDLE);
@@ -55,6 +56,22 @@ public class AgentSessionRuntime implements PiSessionRuntime {
             List<ToolDefinition> tools,
             ModelRef model,
             ThinkingLevel thinkingLevel) {
+        this(sessionId, cwd, agentLoop, llmCaller, storage, broadcaster, systemPrompt, tools,
+                model, thinkingLevel, new com.claubloom.harness.core.config.CoreProperties());
+    }
+
+    public AgentSessionRuntime(
+            String sessionId,
+            String cwd,
+            AgentLoop agentLoop,
+            LlmCaller llmCaller,
+            SessionStorageService storage,
+            SessionEventBroadcaster broadcaster,
+            String systemPrompt,
+            List<ToolDefinition> tools,
+            ModelRef model,
+            ThinkingLevel thinkingLevel,
+            com.claubloom.harness.core.config.CoreProperties coreProperties) {
         this.sessionId = sessionId;
         this.cwd = cwd;
         this.agentLoop = agentLoop;
@@ -63,6 +80,7 @@ public class AgentSessionRuntime implements PiSessionRuntime {
         this.broadcaster = broadcaster;
         this.systemPrompt = systemPrompt;
         this.tools = tools != null ? tools : List.of();
+        this.coreProperties = coreProperties != null ? coreProperties : new com.claubloom.harness.core.config.CoreProperties();
         if (model != null) this.model.set(model);
         if (thinkingLevel != null) this.thinkingLevel.set(thinkingLevel);
     }
@@ -133,6 +151,8 @@ public class AgentSessionRuntime implements PiSessionRuntime {
 
     private AgentLoopConfig buildConfig(AgentEventSink sink) {
         return AgentLoopConfig.builder()
+                .maxTurns(coreProperties.getMaxTurns())
+                .compactionThreshold(coreProperties.getCompactionThreshold())
                 .model(model.get())
                 .thinkingLevel(thinkingLevel.get())
                 .systemPrompt(systemPrompt)

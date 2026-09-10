@@ -13,7 +13,7 @@ public class CoreProperties {
     /**
      * 单个智能体执行循环允许的最大轮次。
      */
-    private int maxTurns = 100;
+    private int maxTurns = 200;
 
     /**
      * 触发上下文压缩的上下文窗口用量阈值比例（0.0 - 1.0）。
