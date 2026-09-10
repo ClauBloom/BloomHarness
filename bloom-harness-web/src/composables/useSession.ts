@@ -54,14 +54,14 @@ export function useSession() {
         }
         store.setSessionList(list);
         ui.reportBackendOk();
-        return lis
+        return list;
       }
       console.warn('Failed to fetch sessions, status:', res.status);
       ui.reportBackendFailure();
     } catch (e) {
       console.error('Failed to fetch sessions:', e);
       ui.reportBackendFailure();
-      store.setError('获取会话列表失败，请确认后端服务已启动');
+      store.setError(`获取会话列表失败: ${e instanceof Error ? e.message : e}（请确认后端服务已启动）`);
     }
     return [];
   }
