@@ -45,7 +45,9 @@ public class SessionController {
         ModelRef model = modelMap == null ? null : new ModelRef(
                 (String) modelMap.get("provider"), (String) modelMap.get("id"));
         String thinking = (String) body.get("thinkingLevel");
-        ThinkingLevel thinkingLevel = thinking == null ? null : ThinkingLevel.valueOf(thinking.toUpperCase());
+        // 严格解析：未知取值抛 ProtocolValidationError，由 RestExceptionHandler 映射为 400。
+        // 不能用宽容的 fromValue（它会静默回退到 OFF，用户拼错也毫无提示）。
+        ThinkingLevel thinkingLevel = ThinkingLevel.parse(thinking);
 
         return service.createSession(CreateSessionOptions.builder()
                         .id(java.util.UUID.randomUUID().toString())
